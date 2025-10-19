@@ -1,0 +1,7 @@
+# Commands
+
+```
+gfs init
+
+```
+# jebi
