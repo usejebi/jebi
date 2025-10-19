@@ -4,6 +4,7 @@ import "github.com/jawahars16/jebi/internal/core"
 
 type appService interface {
 	CreateAppDir() error
+	Exists() (bool, error)
 }
 
 type projectService interface {
@@ -24,6 +25,7 @@ type envService interface {
 	ListEnvs() ([]string, error)
 	CurrentEnv() (string, error)
 	SetCurrentEnv(env string) error
+	GetCurrentEnv() (*core.CurrentEnv, error)
 	RemoveEnv(env string) error
 }
 
@@ -40,7 +42,6 @@ type commitService interface {
 
 type changeRecordService interface {
 	AddChangeRecord(env, action, key string) error
-	GetPendingChanges() ([]core.Change, error)
 	ClearPendingChanges() error
 }
 
@@ -48,6 +49,7 @@ type slate interface {
 	PromptWithDefault(message, defaultValue string) string
 	ShowHeader(title string)
 	ShowList(title string, items []string, highlight string)
-	WriteStatus(key, action string)
+	WriteStatus(changes []core.Change)
 	RenderMarkdown(md string) (string, error)
+	ShowWarning(msg string)
 }

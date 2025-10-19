@@ -48,3 +48,15 @@ func (s *appService) CreateAppDir() error {
 	// Some other error
 	return fmt.Errorf("failed to check directory %q: %w", dirName, err)
 }
+
+func (s *appService) Exists() (bool, error) {
+	dirName := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName))
+	info, err := os.Stat(dirName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check directory %q: %w", dirName, err)
+	}
+	return info.IsDir(), nil
+}

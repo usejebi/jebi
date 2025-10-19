@@ -56,7 +56,8 @@ func (h *Env) HandleUse(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.SetCurrentEnv(env); err != nil {
 		return err
 	}
-	fmt.Printf("🌱 Switched to environment '%s'\n", env)
+	fmt.Printf("switched to environment '%s'\n\n", env)
+	h.HandleList(ctx, cmd)
 	return nil
 }
 

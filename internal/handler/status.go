@@ -2,36 +2,41 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/urfave/cli/v3"
 )
 
 type Status struct {
-	changeRecordService changeRecordService
-	slate               slate
+	envService envService
+	slate      slate
 }
 
-func NewStatusHandler(changeRecordService changeRecordService, slate slate) *Status {
+func NewStatusHandler(envService envService, slate slate) *Status {
 	return &Status{
-		changeRecordService: changeRecordService,
-		slate:               slate,
+		envService: envService,
+		slate:      slate,
 	}
 }
 
 func (h *Status) Handle(ctx context.Context, cmd *cli.Command) error {
-	changes, err := h.changeRecordService.GetPendingChanges()
+	currentEnv, err := h.envService.GetCurrentEnv()
 	if err != nil {
 		return err
 	}
 
-	if len(changes) == 0 {
+	if len(currentEnv.Changes) == 0 {
 		println("No pending changes")
 		return nil
 	}
+	in := fmt.Sprintf("# Pending changes on environment `%s`", currentEnv.Env)
 
-	println("🔍 Pending Changes:")
-	for _, change := range changes {
-		h.slate.WriteStatus(change.Key, change.Action)
+	header, err := h.slate.RenderMarkdown(in)
+	if err != nil {
+		return err
 	}
+	fmt.Print(header)
+
+	h.slate.WriteStatus(currentEnv.Changes)
 	return nil
 }

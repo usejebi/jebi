@@ -65,33 +65,62 @@ func (s *slate) ShowList(title string, items []string, highlight string) {
 	fmt.Println(l)
 }
 
-func (s *slate) WriteStatus(key, acton string) {
+func (s *slate) WriteStatus(changes []core.Change) {
 	var (
-		style  lipgloss.Style
-		symbol string
+		addStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("34"))  // Green
+		modStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("214")) // Orange
+		delStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("131")) // Red
+		padding  = 2
 	)
 
-	switch acton {
-	case core.ActionAdd:
-		style = lipgloss.NewStyle().Foreground(lipgloss.Color("34")) // Green
-		symbol = "+"
-	case core.ActionUpdate:
-		style = lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // Orange
-		symbol = "~"
-	case core.ActionRemove:
-		style = lipgloss.NewStyle().Foreground(lipgloss.Color("160")) // Red
-		symbol = "-"
-	default:
-		style = lipgloss.NewStyle()
+	// Build action label map
+	labelMap := map[string]string{
+		core.ActionAdd:    "added:",
+		core.ActionUpdate: "modified:",
+		core.ActionRemove: "removed:",
 	}
-	fmt.Println(style.Render(fmt.Sprintf("%s %s", symbol, key)))
+
+	// Find longest label for alignment
+	maxLen := 0
+	for _, c := range changes {
+		if l := len(labelMap[c.Action]); l > maxLen {
+			maxLen = l
+		}
+	}
+
+	// Print all aligned lines
+	for _, c := range changes {
+		label := labelMap[c.Action]
+		var style lipgloss.Style
+		var symbol string
+
+		switch c.Action {
+		case core.ActionAdd:
+			style = addStyle
+			symbol = "+"
+		case core.ActionUpdate:
+			style = modStyle
+			symbol = "~"
+		case core.ActionRemove:
+			style = delStyle
+			symbol = "-"
+		default:
+			style = lipgloss.NewStyle()
+			symbol = " "
+		}
+
+		// Align columns with dynamic padding
+		formatted := fmt.Sprintf("%-*s %s", maxLen+padding, label, c.Key)
+		fmt.Println(style.Render(fmt.Sprintf("%s %s", symbol, formatted)))
+	}
 }
 
 func (s *slate) RenderMarkdown(md string) (string, error) {
-	// Use "dark" for syntax highlighting. (AutoStyle causes padding in this version)
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStylePath("dark"), // or "light" depending on preference
-		glamour.WithWordWrap(0),       // disable hard wrap
+		// detect background color and pick either the default dark or light theme
+		glamour.WithAutoStyle(),
+		// wrap output at specific width (default is 80)
+		glamour.WithWordWrap(0),
 	)
 	if err != nil {
 		return "", fmt.Errorf("failed to create markdown renderer: %w", err)
@@ -102,23 +131,20 @@ func (s *slate) RenderMarkdown(md string) (string, error) {
 		return "", fmt.Errorf("failed to render markdown: %w", err)
 	}
 
-	// Remove leading/trailing newlines and collapse multiple blank lines
-	out = strings.TrimSpace(out)
-	out = trimExtraBlankLines(out)
 	return out, nil
 }
 
-func trimExtraBlankLines(s string) string {
-	lines := strings.Split(s, "\n")
-	var compact []string
-	lastBlank := false
-	for _, line := range lines {
-		blank := strings.TrimSpace(line) == ""
-		if blank && lastBlank {
-			continue
-		}
-		compact = append(compact, line)
-		lastBlank = blank
-	}
-	return strings.Join(compact, "\n")
+func (s *slate) ShowWarning(msg string) {
+	border := lipgloss.NewStyle().
+		Border(lipgloss.ThickBorder()).
+		BorderForeground(lipgloss.Color("178")). // warm amber border
+		Padding(0, 1).
+		Margin(1, 0, 1, 0)
+
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("178"))
+
+	box := border.Render(msg)
+	fmt.Println(title.Render(box))
 }

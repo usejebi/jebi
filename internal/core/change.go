@@ -39,15 +39,6 @@ func (s *changeRecordService) AddChangeRecord(env, action, key string) error {
 	return nil
 }
 
-func (s *changeRecordService) GetPendingChanges() ([]Change, error) {
-	currentEnv := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), CurrentFileName)
-	curr, err := io.ReadJSONFile[CurrentEnv](currentEnv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read current environment: %w", err)
-	}
-	return curr.Changes, nil
-}
-
 func (s *changeRecordService) ClearPendingChanges() error {
 	currentEnv := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), CurrentFileName)
 	curr, err := io.ReadJSONFile[CurrentEnv](currentEnv)

@@ -31,8 +31,8 @@ func initializeCommands() []*cli.Command {
 	envHandler := handler.NewEnvHandler(envService, slate)
 	commitHandler := handler.NewCommitHandler(envService, commitService, changeRecordService)
 	exportHandler := handler.NewExportHandler(envService, cryptService, slate)
-	statusHandler := handler.NewStatusHandler(changeRecordService, slate)
-	logHandler := handler.NewLogHandler(envService, commitService)
+	statusHandler := handler.NewStatusHandler(envService, slate)
+	logHandler := handler.NewLogHandler(envService, commitService, slate)
 
 	return []*cli.Command{
 		newInitCommand(projectHandler),

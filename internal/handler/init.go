@@ -33,6 +33,14 @@ func NewInitHandler(
 }
 
 func (h *Init) Handle(ctx context.Context, cmd *cli.Command) error {
+	exists, err := h.appService.Exists()
+	if err != nil {
+		return err
+	}
+	if exists {
+		h.slate.ShowWarning("A Jebi project is already initialized in this directory.\nRemove the .jebi folder and run 'jebi init' again to start fresh.")
+		return nil
+	}
 
 	h.slate.ShowHeader(`
 🚀 jebi — Git for Secrets

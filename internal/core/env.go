@@ -45,6 +45,18 @@ func (e *envService) CurrentEnv() (string, error) {
 	return currentEnv.Env, nil
 }
 
+func (e *envService) GetCurrentEnv() (*CurrentEnv, error) {
+	path := e.currentEnvPath()
+	currentEnv, err := io.ReadJSONFile[CurrentEnv](path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrCurrentEnvNotExist
+		}
+		return nil, err
+	}
+	return &currentEnv, nil
+}
+
 // SetCurrentEnv sets the current active environment in ".<AppName>/current"
 func (e *envService) SetCurrentEnv(env string) error {
 	path := e.currentEnvPath()

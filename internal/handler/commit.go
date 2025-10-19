@@ -30,16 +30,16 @@ func (h *Commit) Handle(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	changes, err := h.changeRecordService.GetPendingChanges()
+	currentEnv, err := h.envService.GetCurrentEnv()
 	if err != nil {
 		return err
 	}
-	if len(changes) == 0 {
+	if len(currentEnv.Changes) == 0 {
 		fmt.Printf("ℹ️  No changes to commit for environment '%s'\n", env)
 		return nil
 	}
 
-	if err := h.commitService.AddCommit(env, msg, changes); err != nil {
+	if err := h.commitService.AddCommit(env, msg, currentEnv.Changes); err != nil {
 		return err
 	}
 

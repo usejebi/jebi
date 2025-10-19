@@ -1,7 +1,0 @@
-# Commands
-
-```
-gfs init
-
-```
-# jebi
