@@ -32,6 +32,7 @@ func initializeCommands() []*cli.Command {
 	commitHandler := handler.NewCommitHandler(envService, commitService, changeRecordService)
 	exportHandler := handler.NewExportHandler(envService, cryptService, slate)
 	statusHandler := handler.NewStatusHandler(envService, slate)
+	runHandler := handler.NewRunHandler(envService, cryptService, slate)
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
 
 	return []*cli.Command{
@@ -44,6 +45,7 @@ func initializeCommands() []*cli.Command {
 		newExportCommand(exportHandler),
 		newLogCommand(logHandler),
 		newStatusCommand(statusHandler),
+		newRunCommand(runHandler),
 		newVersionCommand(),
 	}
 }
