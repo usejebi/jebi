@@ -13,9 +13,11 @@ type Add struct {
 	envService          envService
 	secretService       secretService
 	changeRecordService changeRecordService
+	projectService      projectService
 }
 
 func NewAddHandler(
+	projectService projectService,
 	cryptService cryptService,
 	envService envService,
 	secretService secretService,
@@ -25,6 +27,7 @@ func NewAddHandler(
 		envService:          envService,
 		secretService:       secretService,
 		changeRecordService: changeRecordService,
+		projectService:      projectService,
 	}
 }
 
@@ -36,7 +39,7 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 	key := cmd.Args().Get(0)
 	value := cmd.Args().Get(1)
 
-	encryptionKey, err := s.cryptService.GetKey()
+	encryptionKey, err := s.cryptService.LoadKey()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve encryption key: %w", err)
 	}

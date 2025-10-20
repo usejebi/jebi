@@ -24,15 +24,15 @@ func initializeCommands() []*cli.Command {
 
 	slate := ui.NewSlate(lipgloss.Color("82"))
 
-	setHandler := handler.NewSetHandler(cryptService, envService, secretService, changeRecordService)
-	addHandler := handler.NewAddHandler(cryptService, envService, secretService, changeRecordService)
+	setHandler := handler.NewSetHandler(projectService, cryptService, envService, secretService, changeRecordService)
+	addHandler := handler.NewAddHandler(projectService, cryptService, envService, secretService, changeRecordService)
 	removeHandler := handler.NewRemoveHandler(cryptService, envService, secretService, changeRecordService)
 	projectHandler := handler.NewInitHandler(appService, projectService, envService, cryptService, slate)
 	envHandler := handler.NewEnvHandler(envService, slate)
 	commitHandler := handler.NewCommitHandler(envService, commitService, changeRecordService)
-	exportHandler := handler.NewExportHandler(envService, cryptService, slate)
+	exportHandler := handler.NewExportHandler(envService, cryptService, projectService, slate)
 	statusHandler := handler.NewStatusHandler(envService, slate)
-	runHandler := handler.NewRunHandler(envService, cryptService, slate)
+	runHandler := handler.NewRunHandler(envService, cryptService, projectService, slate)
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
 
 	return []*cli.Command{

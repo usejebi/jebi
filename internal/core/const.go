@@ -5,12 +5,15 @@ const (
 	AppVersion     = "0.1.0"
 	KeyLengthBytes = 32
 
-	KeyFileName        = "enc"
-	SecretFileName     = "sec"
-	ProjectConfigFile  = "pro"
+	KeyFilePath       = "keys/enc.key"
+	EnvDirPath        = "envs"
+	SecretFileName    = "sec"
+	ProjectConfigFile = "pro"
+	CommitFileName    = "commits"
+	CurrentFileName   = "current"
+
 	DefaultEnvironment = "dev"
-	CommitFileName     = "commits"
-	CurrentFileName    = "current"
+	DefaultProjectName = "my-jebi-project"
 )
 
 const (

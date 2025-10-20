@@ -8,16 +8,17 @@ type appService interface {
 }
 
 type projectService interface {
-	SaveProjectConfig(name, description string) error
+	SaveProjectConfig(name, description string) (string, error)
+	LoadProjectConfig() (*core.Project, error)
 }
 
 type cryptService interface {
 	GenerateKey() (string, error)
-	SaveKey(encodedKey string) error
-	GetKey() ([]byte, error)
 	Encrypt(key []byte, plaintext string) (ciphertextB64, nonceB64 string, err error)
 	Decrypt(key []byte, ciphertextB64, nonceB64 string) (string, error)
 	LoadSecrets(env string) (map[string]string, error)
+	SaveKey(key string) error
+	LoadKey() ([]byte, error)
 }
 
 type envService interface {

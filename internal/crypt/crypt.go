@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/jawahars16/jebi/internal/core"
@@ -15,28 +14,15 @@ import (
 )
 
 type cryptService struct {
-	workingDir string
+	workingDir  string
+	keyFilePath string
 }
 
 func NewService(workingDir string) *cryptService {
 	return &cryptService{
-		workingDir: workingDir,
+		workingDir:  workingDir,
+		keyFilePath: filepath.Join(workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFilePath),
 	}
-}
-
-// GenerateKey creates a 32-byte random AES key and returns it in base64 form.
-func (s *cryptService) GenerateKey() (encoded string, err error) {
-	raw := make([]byte, core.KeyLengthBytes) // AES-256 = 32 bytes
-	if _, err = rand.Read(raw); err != nil {
-		return "", fmt.Errorf("failed to generate random key: %w", err)
-	}
-	encoded = base64.StdEncoding.EncodeToString(raw)
-	return encoded, nil
-}
-
-func (s *cryptService) SaveKey(encodedKey string) error {
-	path := filepath.Join(s.workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFileName)
-	return os.WriteFile(path, []byte(encodedKey), 0600)
 }
 
 // Encrypt encrypts plaintext with AES-GCM using the given 32-byte key.
@@ -91,37 +77,13 @@ func (s *cryptService) Decrypt(key []byte, ciphertextB64, nonceB64 string) (stri
 	return string(plaintext), nil
 }
 
-func (s *cryptService) GetKey() ([]byte, error) {
-	path := filepath.Join(s.workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFileName)
-	encodedKey, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read key file: %w", err)
-	}
-
-	rawKey, err := base64.StdEncoding.DecodeString(string(encodedKey))
-	if err != nil {
-		return nil, fmt.Errorf("invalid key encoding: %w", err)
-	}
-
-	if len(rawKey) != core.KeyLengthBytes {
-		return nil, fmt.Errorf("invalid key length: expected %d bytes, got %d", core.KeyLengthBytes, len(rawKey))
-	}
-
-	return rawKey, nil
-}
-
 func (s *cryptService) LoadSecrets(env string) (map[string]string, error) {
-	keyData, err := os.ReadFile(filepath.Join(s.workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFileName))
+	rawKey, err := s.LoadKey()
 	if err != nil {
-		return nil, fmt.Errorf("missing encryption key: %w", err)
+		return nil, fmt.Errorf("failed to load encryption key: %w", err)
 	}
 
-	rawKey, err := base64.StdEncoding.DecodeString(string(keyData))
-	if err != nil {
-		return nil, fmt.Errorf("invalid key encoding: %w", err)
-	}
-
-	file := filepath.Join(s.workingDir, fmt.Sprintf(".%s", core.AppName), env, core.SecretFileName)
+	file := filepath.Join(s.workingDir, fmt.Sprintf(".%s", core.AppName), core.EnvDirPath, env, core.SecretFileName)
 	enc, err := jio.ReadJSONFile[map[string]core.Secret](file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read secrets: %w", err)

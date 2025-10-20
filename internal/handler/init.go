@@ -42,6 +42,11 @@ func (h *Init) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
+	// Create hidden directory
+	if err := h.appService.CreateAppDir(); err != nil {
+		return err
+	}
+
 	h.slate.ShowHeader(`
 🚀 jebi — Git for Secrets
 Manage, version, and collaborate on secrets
@@ -52,14 +57,19 @@ This will initialize a new jebi project:
  • Generate and encrypt a symmetric key
 	`)
 
-	defaultName := "my-project"
-	projectName := h.slate.PromptWithDefault("project name:", defaultName)
-	projectDescription := h.slate.PromptWithDefault("project description:", "A new gfs project")
-	environment := h.slate.PromptWithDefault("environment (dev/prod):", core.DefaultEnvironment)
+	projectName := cmd.String("name")
+	projectDescription := cmd.String("description")
+	environment := cmd.String("environment")
 
-	// Create hidden directory
-	if err := h.appService.CreateAppDir(); err != nil {
-		return err
+	// Fallback to prompts only if not provided
+	if projectName == "" {
+		projectName = h.slate.PromptWithDefault("project name:", core.DefaultProjectName)
+	}
+	if projectDescription == "" {
+		projectDescription = h.slate.PromptWithDefault("project description:", "A new jebi project to manage my secrets")
+	}
+	if environment == "" {
+		environment = h.slate.PromptWithDefault("environment (dev/prod):", core.DefaultEnvironment)
 	}
 
 	// Create environment config
@@ -73,7 +83,8 @@ This will initialize a new jebi project:
 	}
 
 	// Save project configuration
-	if err := h.projectService.SaveProjectConfig(projectName, projectDescription); err != nil {
+	_, err = h.projectService.SaveProjectConfig(projectName, projectDescription)
+	if err != nil {
 		return err
 	}
 

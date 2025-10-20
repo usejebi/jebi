@@ -18,8 +18,12 @@ func NewSecretService(workingDir string) *secretService {
 	}
 }
 
+func (s *secretService) envDir(env string) string {
+	return filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), EnvDirPath, env)
+}
+
 func (s *secretService) AddSecret(key, env string, secret Secret) error {
-	envDir := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), env)
+	envDir := s.envDir(env)
 	secretPath := filepath.Join(envDir, SecretFileName)
 
 	var data map[string]Secret
@@ -46,7 +50,7 @@ func (s *secretService) AddSecret(key, env string, secret Secret) error {
 }
 
 func (s *secretService) SetSecret(key, env string, secret Secret) (string, error) {
-	envDir := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), env)
+	envDir := s.envDir(env)
 	secretPath := filepath.Join(envDir, SecretFileName)
 
 	data, err := io.ReadJSONFile[map[string]Secret](secretPath)
@@ -71,7 +75,7 @@ func (s *secretService) SetSecret(key, env string, secret Secret) (string, error
 }
 
 func (s *secretService) RemoveSecret(key, env string) error {
-	envDir := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), env)
+	envDir := s.envDir(env)
 	secretPath := filepath.Join(envDir, SecretFileName)
 
 	data, err := io.ReadJSONFile[map[string]Secret](secretPath)

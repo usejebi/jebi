@@ -9,16 +9,18 @@ import (
 )
 
 type Export struct {
-	envService    envService
-	exportService cryptService
-	slate         slate
+	envService     envService
+	cryptService   cryptService
+	projectService projectService
+	slate          slate
 }
 
-func NewExportHandler(envService envService, exportService cryptService, slate slate) *Export {
+func NewExportHandler(envService envService, cryptService cryptService, projectService projectService, slate slate) *Export {
 	return &Export{
-		envService:    envService,
-		exportService: exportService,
-		slate:         slate,
+		envService:     envService,
+		cryptService:   cryptService,
+		projectService: projectService,
+		slate:          slate,
 	}
 }
 
@@ -29,7 +31,7 @@ func (h *Export) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
 
-	secrets, err := h.exportService.LoadSecrets(env)
+	secrets, err := h.cryptService.LoadSecrets(env)
 	if err != nil {
 		return fmt.Errorf("failed to load secrets: %w", err)
 	}

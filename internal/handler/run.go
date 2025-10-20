@@ -10,16 +10,18 @@ import (
 )
 
 type Run struct {
-	envService   envService
-	cryptService cryptService
-	slate        slate
+	envService     envService
+	cryptService   cryptService
+	projectService projectService
+	slate          slate
 }
 
-func NewRunHandler(envService envService, cryptService cryptService, slate slate) *Run {
+func NewRunHandler(envService envService, cryptService cryptService, projectService projectService, slate slate) *Run {
 	return &Run{
-		envService:   envService,
-		cryptService: cryptService,
-		slate:        slate,
+		envService:     envService,
+		cryptService:   cryptService,
+		projectService: projectService,
+		slate:          slate,
 	}
 }
 

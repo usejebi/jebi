@@ -8,18 +8,19 @@ import (
 )
 
 type changeRecordService struct {
-	workingDir string
+	workingDir     string
+	currentEnvPath string
 }
 
 func NewChangeRecordService(workingDir string) *changeRecordService {
 	return &changeRecordService{
-		workingDir: workingDir,
+		workingDir:     workingDir,
+		currentEnvPath: filepath.Join(workingDir, fmt.Sprintf(".%s", AppName), EnvDirPath, CurrentFileName),
 	}
 }
 
 func (s *changeRecordService) AddChangeRecord(env, action, key string) error {
-	currentEnv := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), CurrentFileName)
-	curr, err := io.ReadJSONFile[CurrentEnv](currentEnv)
+	curr, err := io.ReadJSONFile[CurrentEnv](s.currentEnvPath)
 	if err != nil {
 		return fmt.Errorf("failed to read current environment: %w", err)
 	}
@@ -32,7 +33,7 @@ func (s *changeRecordService) AddChangeRecord(env, action, key string) error {
 	})
 	curr.Changes = normalizeChanges(curr.Changes)
 
-	err = io.WriteJSONToFile(currentEnv, curr)
+	err = io.WriteJSONToFile(s.currentEnvPath, curr)
 	if err != nil {
 		return fmt.Errorf("failed to write current environment: %w", err)
 	}
@@ -40,14 +41,13 @@ func (s *changeRecordService) AddChangeRecord(env, action, key string) error {
 }
 
 func (s *changeRecordService) ClearPendingChanges() error {
-	currentEnv := filepath.Join(s.workingDir, fmt.Sprintf(".%s", AppName), CurrentFileName)
-	curr, err := io.ReadJSONFile[CurrentEnv](currentEnv)
+	curr, err := io.ReadJSONFile[CurrentEnv](s.currentEnvPath)
 	if err != nil {
 		return fmt.Errorf("failed to read current environment: %w", err)
 	}
 	curr.Changes = []Change{}
 
-	err = io.WriteJSONToFile(currentEnv, curr)
+	err = io.WriteJSONToFile(s.currentEnvPath, curr)
 	if err != nil {
 		return fmt.Errorf("failed to write current environment: %w", err)
 	}

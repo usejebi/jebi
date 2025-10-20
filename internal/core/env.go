@@ -24,12 +24,12 @@ func NewEnvService(workingDir string) *envService {
 
 // currentEnvPath returns the path to the "current" file
 func (e *envService) currentEnvPath() string {
-	return filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName), CurrentFileName)
+	return filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName), EnvDirPath, CurrentFileName)
 }
 
 // envDir returns the directory for a given environment
 func (e *envService) envDir(env string) string {
-	return filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName), env)
+	return filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName), EnvDirPath, env)
 }
 
 // CurrentEnv reads the active environment from ".<AppName>/current"
