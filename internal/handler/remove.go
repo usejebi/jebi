@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jawahars16/jebi/internal/core"
@@ -13,18 +14,21 @@ type Remove struct {
 	envService          envService
 	secretService       secretService
 	changeRecordService changeRecordService
+	slate               slate
 }
 
 func NewRemoveHandler(
 	cryptService cryptService,
 	envService envService,
 	secretService secretService,
-	changeRecordService changeRecordService) *Remove {
+	changeRecordService changeRecordService,
+	slate slate) *Remove {
 	return &Remove{
 		cryptService:        cryptService,
 		envService:          envService,
 		secretService:       secretService,
 		changeRecordService: changeRecordService,
+		slate:               slate,
 	}
 }
 
@@ -40,6 +44,10 @@ func (s *Remove) Handle(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if err := s.secretService.RemoveSecret(key, env); err != nil {
+		if errors.Is(err, core.ErrSecretNotFound) {
+			s.slate.ShowError(fmt.Sprintf("secret with key '%s' does not exist", key))
+			return nil
+		}
 		return fmt.Errorf("failed to remove secret: %w", err)
 	}
 

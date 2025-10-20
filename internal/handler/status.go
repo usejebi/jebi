@@ -25,18 +25,15 @@ func (h *Status) Handle(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
+	in := fmt.Sprintf("On environment %s", currentEnv.Env)
 	if len(currentEnv.Changes) == 0 {
-		println("No pending changes")
+		in += "\n(no pending changes)"
+		fmt.Println(in)
 		return nil
 	}
-	in := fmt.Sprintf("# Pending changes on environment `%s`", currentEnv.Env)
+	// in = fmt.Sprintf("Pending changes on environment %s", currentEnv.Env)
 
-	header, err := h.slate.RenderMarkdown(in)
-	if err != nil {
-		return err
-	}
-	fmt.Print(header)
-
+	fmt.Println(in)
 	h.slate.WriteStatus(currentEnv.Changes)
 	return nil
 }

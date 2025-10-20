@@ -8,6 +8,11 @@ import (
 	"github.com/jawahars16/jebi/internal/io"
 )
 
+var (
+	ErrSecretAlreadyExists = fmt.Errorf("secret already exists")
+	ErrSecretNotFound      = fmt.Errorf("secret not found")
+)
+
 type secretService struct {
 	workingDir string
 }
@@ -36,7 +41,7 @@ func (s *secretService) AddSecret(key, env string, secret Secret) error {
 			return fmt.Errorf("failed to read secrets: %w", err)
 		}
 		if _, exists := data[key]; exists {
-			return fmt.Errorf("secret with key %q already exists", key)
+			return ErrSecretAlreadyExists
 		}
 	}
 
@@ -84,7 +89,7 @@ func (s *secretService) RemoveSecret(key, env string) error {
 	}
 
 	if _, exists := data[key]; !exists {
-		return fmt.Errorf("secret with key %q does not exist", key)
+		return ErrSecretNotFound
 	}
 
 	delete(data, key)

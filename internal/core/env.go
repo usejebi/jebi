@@ -125,7 +125,7 @@ func (e *envService) HasPendingChanges() (bool, error) {
 
 // ListEnvs lists all environment folders inside ".<AppName>"
 func (e *envService) ListEnvs() ([]string, error) {
-	dir := filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName))
+	dir := filepath.Join(e.workingDir, fmt.Sprintf(".%s", AppName), EnvDirPath)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err

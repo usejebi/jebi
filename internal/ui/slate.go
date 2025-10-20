@@ -67,9 +67,9 @@ func (s *slate) ShowList(title string, items []string, highlight string) {
 
 func (s *slate) WriteStatus(changes []core.Change) {
 	var (
-		addStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("34"))  // Green
-		modStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("214")) // Orange
-		delStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2).Foreground(lipgloss.Color("131")) // Red
+		addStyle = lipgloss.NewStyle().Padding(0, 0, 0, 1).Foreground(lipgloss.Color("34"))  // Green
+		modStyle = lipgloss.NewStyle().Padding(0, 0, 0, 1).Foreground(lipgloss.Color("214")) // Orange
+		delStyle = lipgloss.NewStyle().Padding(0, 0, 0, 1).Foreground(lipgloss.Color("131")) // Red
 		padding  = 2
 	)
 
@@ -115,7 +115,7 @@ func (s *slate) WriteStatus(changes []core.Change) {
 	}
 }
 
-func (s *slate) RenderMarkdown(md string) (string, error) {
+func (s *slate) RenderMarkdown(md string) {
 	r, err := glamour.NewTermRenderer(
 		// detect background color and pick either the default dark or light theme
 		glamour.WithAutoStyle(),
@@ -123,15 +123,15 @@ func (s *slate) RenderMarkdown(md string) (string, error) {
 		glamour.WithWordWrap(0),
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to create markdown renderer: %w", err)
+		fmt.Printf("failed to create markdown renderer: %w", err)
 	}
 
 	out, err := r.Render(md)
 	if err != nil {
-		return "", fmt.Errorf("failed to render markdown: %w", err)
+		fmt.Printf("failed to render markdown: %w", err)
 	}
 
-	return out, nil
+	fmt.Println(out)
 }
 
 func (s *slate) ShowWarning(msg string) {
@@ -144,6 +144,21 @@ func (s *slate) ShowWarning(msg string) {
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("178"))
+
+	box := border.Render(msg)
+	fmt.Println(title.Render(box))
+}
+
+func (s *slate) ShowError(msg string) {
+	border := lipgloss.NewStyle().
+		Border(lipgloss.ThickBorder()).
+		BorderForeground(lipgloss.Color("196")). // bright red border
+		Padding(0, 1).
+		Margin(1, 0, 1, 0)
+
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("196")) // red title color
 
 	box := border.Render(msg)
 	fmt.Println(title.Render(box))

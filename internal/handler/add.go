@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jawahars16/jebi/internal/core"
@@ -14,6 +15,7 @@ type Add struct {
 	secretService       secretService
 	changeRecordService changeRecordService
 	projectService      projectService
+	slate               slate
 }
 
 func NewAddHandler(
@@ -21,12 +23,14 @@ func NewAddHandler(
 	cryptService cryptService,
 	envService envService,
 	secretService secretService,
-	changeRecordService changeRecordService) *Add {
+	changeRecordService changeRecordService,
+	slate slate) *Add {
 	return &Add{
 		cryptService:        cryptService,
 		envService:          envService,
 		secretService:       secretService,
 		changeRecordService: changeRecordService,
+		slate:               slate,
 		projectService:      projectService,
 	}
 }
@@ -67,6 +71,10 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
 	if err := s.secretService.AddSecret(key, env, secret); err != nil {
+		if errors.Is(err, core.ErrSecretAlreadyExists) {
+			s.slate.ShowError(fmt.Sprintf("secret with key '%s' already exists", key))
+			return nil
+		}
 		return fmt.Errorf("failed to add secret: %w", err)
 	}
 

@@ -43,11 +43,6 @@ func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 		c := commits[i]
 		output += fmt.Sprintf("commit %s \nDate: %s\n `%s` \n\n", c.ID, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
 	}
-	result, err := h.slate.RenderMarkdown(output)
-	if err != nil {
-		return fmt.Errorf("failed to render markdown: %w", err)
-	}
-
-	fmt.Println(result)
+	h.slate.RenderMarkdown(output)
 	return nil
 }

@@ -44,7 +44,7 @@ func (h *Env) HandleNew(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.SetCurrentEnv(env); err != nil {
 		return err
 	}
-	fmt.Printf("✅ Created environment '%s'\n", env)
+	h.slate.RenderMarkdown(fmt.Sprintf("Created environment `%s`", env))
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (h *Env) HandleUse(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.SetCurrentEnv(env); err != nil {
 		return err
 	}
-	fmt.Printf("switched to environment '%s'\n\n", env)
+	h.slate.RenderMarkdown(fmt.Sprintf("Switched to environment `%s`", env))
 	h.HandleList(ctx, cmd)
 	return nil
 }
@@ -69,6 +69,6 @@ func (h *Env) HandleRemove(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.RemoveEnv(env); err != nil {
 		return err
 	}
-	fmt.Printf("🗑️  Removed environment '%s'\n", env)
+	h.slate.RenderMarkdown(fmt.Sprintf("Removed environment `%s`", env))
 	return nil
 }

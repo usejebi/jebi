@@ -51,6 +51,7 @@ type slate interface {
 	ShowHeader(title string)
 	ShowList(title string, items []string, highlight string)
 	WriteStatus(changes []core.Change)
-	RenderMarkdown(md string) (string, error)
+	RenderMarkdown(md string)
 	ShowWarning(msg string)
+	ShowError(msg string)
 }

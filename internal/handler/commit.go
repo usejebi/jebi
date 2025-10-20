@@ -12,13 +12,20 @@ type Commit struct {
 	envService          envService
 	commitService       commitService
 	changeRecordService changeRecordService
+	slate               slate
 }
 
-func NewCommitHandler(envService envService, commitService commitService, changeRecordService changeRecordService) *Commit {
+func NewCommitHandler(
+	envService envService,
+	commitService commitService,
+	changeRecordService changeRecordService,
+	slate slate,
+) *Commit {
 	return &Commit{
 		envService:          envService,
 		commitService:       commitService,
 		changeRecordService: changeRecordService,
+		slate:               slate,
 	}
 }
 
@@ -47,6 +54,26 @@ func (h *Commit) Handle(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	fmt.Printf("✅ [%s] Commit created for environment '%s'\n", core.AppName, env)
+	var (
+		output    string
+		additions int
+		deletions int
+		changes   int
+	)
+
+	for _, change := range currentEnv.Changes {
+		switch change.Action {
+		case core.ActionAdd:
+			additions++
+		case core.ActionRemove:
+			deletions++
+		case core.ActionUpdate:
+			changes++
+		}
+	}
+
+	output += fmt.Sprintf("[environment `%s`] %s\n", env, msg)
+	output += fmt.Sprintf(" %d additions(+), %d deletions(-), %d changes(~)\n", additions, deletions, changes)
+	h.slate.RenderMarkdown(output)
 	return nil
 }
