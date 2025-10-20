@@ -123,12 +123,12 @@ func (s *slate) RenderMarkdown(md string) {
 		glamour.WithWordWrap(0),
 	)
 	if err != nil {
-		fmt.Printf("failed to create markdown renderer: %w", err)
+		fmt.Printf("failed to create markdown renderer: %v", err)
 	}
 
 	out, err := r.Render(md)
 	if err != nil {
-		fmt.Printf("failed to render markdown: %w", err)
+		fmt.Printf("failed to render markdown: %v", err)
 	}
 
 	fmt.Println(out)

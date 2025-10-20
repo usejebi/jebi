@@ -102,18 +102,16 @@ func TestHappyPath(t *testing.T) {
 	// Step 3: commit
 	out, err = runCLI(ctx, t, bin, tmpDir, "commit", "-m", "Add API key")
 	assert.NoError(t, err, out)
-	assert.Contains(t, out, "Commit created for environment 'dev'", out)
+	assert.Contains(t, out, "\n  [environment dev] Add API key\n  1 additions(+), 0 deletions(-), 0 changes(~)\n\n\n", out)
 
 	// Step 4: status
 	out, err = runCLI(ctx, t, bin, tmpDir, "status")
 	assert.NoError(t, err, out)
-	assert.Contains(t, out, "No pending changes", out)
+	assert.Contains(t, out, "no pending changes", out)
 
 	// Step 5: check .jebi folder exists
 	appDir := filepath.Join(tmpDir, ".jebi")
 	_, err = os.Stat(appDir)
 	assert.NoError(t, err)
 	assert.False(t, os.IsNotExist(err))
-
-	t.Log("✅ Happy path E2E test passed successfully")
 }

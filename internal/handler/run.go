@@ -48,6 +48,8 @@ func (h *Run) Handle(ctx context.Context, cmd *cli.Command) error {
 	child.Stderr = os.Stderr
 	child.Stdin = os.Stdin
 
+	h.slate.ShowHeader("Jebi is spawning your command with secrets injected at runtime.\nThese secrets are available only to this process and its children.")
+
 	err = child.Run()
 
 	if exitErr, ok := err.(*exec.ExitError); ok {
