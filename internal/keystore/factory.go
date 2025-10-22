@@ -1,22 +1,13 @@
 package keystore
 
 import (
-	"os/user"
 	"path/filepath"
 )
 
 // NewDefault creates a keystore with sensible defaults
 func NewDefault(workingDir string) KeyStore {
-	// Get current user for keyring username
-	currentUser, err := user.Current()
-	username := "jebi-user"
-	if err == nil && currentUser.Username != "" {
-		username = currentUser.Username
-	}
-
 	return NewKeyStore(Config{
 		ServiceName: "jebi-cli",
-		Username:    username,
 		WorkingDir:  workingDir,
 		UseKeyring:  true, // Enable keyring by default
 	})
@@ -26,7 +17,6 @@ func NewDefault(workingDir string) KeyStore {
 func NewDiskOnly(workingDir string) KeyStore {
 	return NewKeyStore(Config{
 		ServiceName: "jebi-cli",
-		Username:    "local",
 		WorkingDir:  workingDir,
 		UseKeyring:  false, // Disable keyring
 	})

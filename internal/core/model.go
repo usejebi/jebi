@@ -38,13 +38,19 @@ type Change struct {
 }
 
 type User struct {
-	Username string `json:"username"`
-	Server   string `json:"server"`
+	ID          string `json:"id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"displayName,omitempty"`
+	Username    string `json:"username,omitempty"`
 }
 
-type AuthResult struct {
-	Username     string `json:"username"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	ExpiresIn    int64  `json:"expires_in,omitempty"`
+type Tokens struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken,omitempty"`
+	ExpiresIn    int64  `json:"expiresIn,omitempty"`
+}
+
+type AuthResponse struct {
+	Tokens Tokens `json:"tokens"`
+	User   User   `json:"user"`
 }

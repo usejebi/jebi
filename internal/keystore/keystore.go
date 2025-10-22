@@ -21,7 +21,6 @@ type KeyStore interface {
 // keyStore implements KeyStore interface
 type keyStore struct {
 	serviceName string
-	username    string
 	workingDir  string
 	useKeyring  bool
 }
@@ -29,7 +28,6 @@ type keyStore struct {
 // Config holds configuration for the keystore
 type Config struct {
 	ServiceName string // e.g., "jebi-cli"
-	Username    string // e.g., current user or app identifier
 	WorkingDir  string // fallback directory for disk storage
 	UseKeyring  bool   // whether to attempt keyring first
 }
@@ -38,7 +36,6 @@ type Config struct {
 func NewKeyStore(config Config) KeyStore {
 	return &keyStore{
 		serviceName: config.ServiceName,
-		username:    config.Username,
 		workingDir:  config.WorkingDir,
 		useKeyring:  config.UseKeyring,
 	}
@@ -127,7 +124,7 @@ func (k *keyStore) setKeyring(key, value string) error {
 		return fmt.Errorf("keyring not supported on platform: %s", runtime.GOOS)
 	}
 
-	return keyring.Set(k.serviceName, k.getKeyringKey(key), value)
+	return keyring.Set(k.serviceName, key, value)
 }
 
 // getKeyring retrieves data from platform keyring
@@ -136,7 +133,7 @@ func (k *keyStore) getKeyring(key string) (string, error) {
 		return "", fmt.Errorf("keyring not supported on platform: %s", runtime.GOOS)
 	}
 
-	return keyring.Get(k.serviceName, k.getKeyringKey(key))
+	return keyring.Get(k.serviceName, key)
 }
 
 // deleteKeyring removes data from platform keyring
@@ -145,7 +142,7 @@ func (k *keyStore) deleteKeyring(key string) error {
 		return fmt.Errorf("keyring not supported on platform: %s", runtime.GOOS)
 	}
 
-	return keyring.Delete(k.serviceName, k.getKeyringKey(key))
+	return keyring.Delete(k.serviceName, key)
 }
 
 // setDisk stores data on disk with restricted permissions
@@ -192,11 +189,6 @@ func (k *keyStore) deleteDisk(key string) error {
 // getDiskPath returns the file path for disk storage
 func (k *keyStore) getDiskPath(key string) string {
 	return filepath.Join(k.workingDir, ".jebi", "keystore", fmt.Sprintf("%s.json", key))
-}
-
-// getKeyringKey returns the keyring key with username prefix
-func (k *keyStore) getKeyringKey(key string) string {
-	return fmt.Sprintf("%s-%s", k.username, key)
 }
 
 // isKeyringSupportedPlatform checks if keyring is supported on current platform

@@ -48,7 +48,7 @@ type changeRecordService interface {
 
 type userService interface {
 	Login(username, password, server string) (token string, err error)
-	AuthenticateWithBrowser(server string) (*core.AuthResult, error)
+	AuthenticateWithBrowser(server string) (*core.AuthResponse, error)
 	SaveAuthToken(token string) error
 	LoadAuthToken() (string, error)
 	SaveCurrentUser(user core.User) error

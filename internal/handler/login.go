@@ -29,27 +29,14 @@ func (h *Login) Handle(ctx context.Context, cmd *cli.Command) error {
 	<%s>`, core.LoginURL))
 
 	// Attempt browser-based authentication
+	// The userService handles saving all authentication details internally
 	authResult, err := h.userService.AuthenticateWithBrowser(core.LoginURL)
 	if err != nil {
 		h.slate.ShowError(fmt.Sprintf("Authentication failed: %v", err))
 		return nil
 	}
 
-	// Save the authentication tokens
-	if err := h.userService.SaveAuthToken(authResult.AccessToken); err != nil {
-		return fmt.Errorf("failed to save authentication token: %w", err)
-	}
+	fmt.Printf("Successfully authenticated as %s\n", authResult.User.DisplayName)
 
-	// Store the current user information
-	user := core.User{
-		Username: authResult.Username,
-		Server:   core.LoginURL,
-	}
-	if err := h.userService.SaveCurrentUser(user); err != nil {
-		return fmt.Errorf("failed to save user information: %w", err)
-	}
-
-	fmt.Printf("✅ Successfully authenticated as '%s'\n", authResult.Username)
-	fmt.Printf("🔒 Authentication token saved securely\n")
 	return nil
 }

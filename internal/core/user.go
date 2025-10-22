@@ -7,30 +7,30 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
 
-	"github.com/jawahars16/jebi/internal/io"
+	"github.com/jawahars16/jebi/internal/keystore"
 )
 
 type userService struct {
 	workingDir string
+	keystore   keystore.KeyStore
 }
 
 func NewUserService(workingDir string) *userService {
 	return &userService{
 		workingDir: workingDir,
+		keystore:   keystore.NewDefault(workingDir),
 	}
 }
 
-func (u *userService) authTokenPath() string {
-	return filepath.Join(u.workingDir, fmt.Sprintf(".%s", AppName), "auth.token")
-}
-
-func (u *userService) userConfigPath() string {
-	return filepath.Join(u.workingDir, fmt.Sprintf(".%s", AppName), "user.config")
+func NewUserServiceWithKeystore(workingDir string, ks keystore.KeyStore) *userService {
+	return &userService{
+		workingDir: workingDir,
+		keystore:   ks,
+	}
 }
 
 // Login authenticates with the server and returns a token
@@ -41,7 +41,7 @@ func (u *userService) Login(username, password, server string) (string, error) {
 }
 
 // AuthenticateWithBrowser opens a browser for OAuth-style authentication
-func (u *userService) AuthenticateWithBrowser(serverURL string) (*AuthResult, error) {
+func (u *userService) AuthenticateWithBrowser(serverURL string) (*AuthResponse, error) {
 	// Start local callback server
 	port, authChan, err := u.startCallbackServer()
 	if err != nil {
@@ -65,10 +65,45 @@ func (u *userService) AuthenticateWithBrowser(serverURL string) (*AuthResult, er
 		if authResult == nil {
 			return nil, fmt.Errorf("authentication failed")
 		}
+		err := u.saveAuthResponse(authResult)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save auth response: %w", err)
+		}
 		return authResult, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf("authentication timeout. Please try again")
 	}
+}
+
+func (u *userService) saveAuthResponse(resp *AuthResponse) error {
+	// Save the full auth response
+	if err := u.keystore.Set("auth_response", resp); err != nil {
+		return fmt.Errorf("failed to save auth response: %w", err)
+	}
+
+	// Save individual tokens for easy access
+	if err := u.keystore.Set("access_token", resp.Tokens.AccessToken); err != nil {
+		return fmt.Errorf("failed to save access token: %w", err)
+	}
+
+	if resp.Tokens.RefreshToken != "" {
+		if err := u.keystore.Set("refresh_token", resp.Tokens.RefreshToken); err != nil {
+			return fmt.Errorf("failed to save refresh token: %w", err)
+		}
+	}
+
+	// Save user information (without server field)
+	user := User{
+		ID:          resp.User.ID,
+		Email:       resp.User.Email,
+		Username:    resp.User.Username,
+		DisplayName: resp.User.DisplayName,
+	}
+	if err := u.keystore.Set("current_user", user); err != nil {
+		return fmt.Errorf("failed to save user info: %w", err)
+	}
+
+	return nil
 }
 
 // openBrowser opens the specified URL in the user's default browser
@@ -94,7 +129,7 @@ func (u *userService) openBrowser(url string) error {
 }
 
 // startCallbackServer starts a local HTTP server to receive the auth callback
-func (u *userService) startCallbackServer() (int, <-chan *AuthResult, error) {
+func (u *userService) startCallbackServer() (int, <-chan *AuthResponse, error) {
 	// Find an available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -104,7 +139,7 @@ func (u *userService) startCallbackServer() (int, <-chan *AuthResult, error) {
 	listener.Close()
 
 	// Create channel for authentication result
-	authChan := make(chan *AuthResult, 1)
+	authChan := make(chan *AuthResponse, 1)
 
 	// Create HTTP server
 	mux := http.NewServeMux()
@@ -125,10 +160,8 @@ func (u *userService) startCallbackServer() (int, <-chan *AuthResult, error) {
 			return
 		}
 
-		var payload struct {
-			Tokens AuthResult `json:"tokens"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		var response AuthResponse
+		if err := json.NewDecoder(r.Body).Decode(&response); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			authChan <- nil
 			return
@@ -140,7 +173,7 @@ func (u *userService) startCallbackServer() (int, <-chan *AuthResult, error) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 
 		// Send result to channel
-		authChan <- &payload.Tokens
+		authChan <- &response
 	})
 
 	// Start server in background
@@ -162,36 +195,89 @@ func (u *userService) startCallbackServer() (int, <-chan *AuthResult, error) {
 	return port, authChan, nil
 }
 
-// SaveAuthToken saves the authentication token to disk
+// SaveAuthToken saves the authentication token securely
 func (u *userService) SaveAuthToken(token string) error {
-	return io.WriteJSONToFile(u.authTokenPath(), map[string]string{"token": token})
+	return u.keystore.Set("access_token", token)
 }
 
-// LoadAuthToken loads the authentication token from disk
+// LoadAuthToken loads the authentication token securely
 func (u *userService) LoadAuthToken() (string, error) {
-	data, err := io.ReadJSONFile[map[string]string](u.authTokenPath())
-	if err != nil {
-		return "", err
-	}
-	return data["token"], nil
+	var token string
+	err := u.keystore.Get("access_token", &token)
+	return token, err
 }
 
-// SaveCurrentUser saves the current user information
+// SaveCurrentUser saves the current user information securely
 func (u *userService) SaveCurrentUser(user User) error {
-	return io.WriteJSONToFile(u.userConfigPath(), user)
+	return u.keystore.Set("current_user", user)
 }
 
-// LoadCurrentUser loads the current user information
+// LoadCurrentUser loads the current user information securely
 func (u *userService) LoadCurrentUser() (*User, error) {
-	user, err := io.ReadJSONFile[User](u.userConfigPath())
+	var user User
+	err := u.keystore.Get("current_user", &user)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
+// GetAuthResponse retrieves the full authentication response
+func (u *userService) GetAuthResponse() (*AuthResponse, error) {
+	var authResp AuthResponse
+	err := u.keystore.Get("auth_response", &authResp)
+	if err != nil {
+		return nil, err
+	}
+	return &authResp, nil
+}
+
+// GetRefreshToken retrieves the refresh token if available
+func (u *userService) GetRefreshToken() (string, error) {
+	var token string
+	err := u.keystore.Get("refresh_token", &token)
+	return token, err
+}
+
+// IsAuthenticated checks if the user is currently authenticated
+func (u *userService) IsAuthenticated() bool {
+	return u.keystore.Exists("access_token") && u.keystore.Exists("current_user")
+}
+
+// GetUserInfo returns basic user information if authenticated
+func (u *userService) GetUserInfo() (username string, err error) {
+	user, err := u.LoadCurrentUser()
+	if err != nil {
+		return "", err
+	}
+	return user.Email, nil
+}
+
+// RefreshAuthToken refreshes the authentication token using the refresh token
+func (u *userService) RefreshAuthToken() error {
+	// TODO: Implement token refresh logic
+	// This would typically involve:
+	// 1. Get refresh token
+	// 2. Make API call to refresh endpoint
+	// 3. Save new tokens
+	return fmt.Errorf("token refresh not implemented yet")
+}
+
 // Logout clears the authentication token and user information
 func (u *userService) Logout() error {
-	// TODO: Implement logout logic (clear token, notify server, etc.)
-	return fmt.Errorf("logout not implemented yet")
+	// Clear all authentication data
+	keys := []string{"access_token", "refresh_token", "current_user", "auth_response"}
+
+	var errors []error
+	for _, key := range keys {
+		if err := u.keystore.Delete(key); err != nil {
+			errors = append(errors, fmt.Errorf("failed to delete %s: %w", key, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("logout partially failed: %v", errors)
+	}
+
+	return nil
 }
