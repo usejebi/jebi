@@ -36,3 +36,15 @@ type Change struct {
 	Action string `json:"action"`
 	Key    string `json:"key"`
 }
+
+type User struct {
+	Username string `json:"username"`
+	Server   string `json:"server"`
+}
+
+type AuthResult struct {
+	Username     string `json:"username"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	ExpiresIn    int64  `json:"expires_in,omitempty"`
+}

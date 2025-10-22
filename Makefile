@@ -1,15 +1,13 @@
-run:
-	@echo "Running the application..."
-	go run main.go
+APP_NAME := jebi
 
-build:
-	@echo "Building the application..."
-	go build -o gfs main.go
+.PHONY: all test install
+
+all: test
 
 test:
-	@echo "Running tests..."
-	go test ./...
+	@echo "🧪 Running tests..."
+	go test ./... -v
 
 install:
-	@echo "Installing the application..."
-	go install main.go
+	@echo "📦 Installing $(APP_NAME)..."
+	go install ./...

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -31,18 +32,21 @@ func (h *Run) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("no command provided; usage: jebi run -- <command> [args...]")
 	}
 
-	currentEnvenv, err := h.envService.CurrentEnv()
+	currentEnv, err := h.envService.CurrentEnv()
 	if err != nil {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
 
-	secrets, err := h.cryptService.LoadSecrets(currentEnvenv)
+	secrets, err := h.cryptService.LoadSecrets(currentEnv)
 	if err != nil {
 		return fmt.Errorf("failed to load secrets: %w", err)
 	}
 
-	// Prepare the child process
-	child := exec.Command(args[0], args[1:]...)
+	// Build the full shell command string
+	commandLine := strings.Join(args, " ")
+
+	// Spawn using a shell to support npm/yarn/next, etc.
+	child := exec.Command("/bin/sh", "-c", commandLine)
 	child.Env = append(os.Environ(), flattenEnv(secrets)...)
 	child.Stdout = os.Stdout
 	child.Stderr = os.Stderr

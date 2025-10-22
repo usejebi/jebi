@@ -1,5 +1,10 @@
 package core
 
+// Build-time variables (can be set with -ldflags)
+var (
+	LoginURL = "http://localhost:3000/auth/login" // Can be overridden at build time
+)
+
 const (
 	AppName        = "jebi"
 	AppVersion     = "0.1.0"
@@ -14,6 +19,7 @@ const (
 
 	DefaultEnvironment = "dev"
 	DefaultProjectName = "my-jebi-project"
+	DefaultServerURL   = "https://api.jebi.dev"
 )
 
 const (

@@ -21,6 +21,7 @@ func initializeCommands() []*cli.Command {
 	secretService := core.NewSecretService(workingDir)
 	commitService := core.NewCommitService(workingDir)
 	changeRecordService := core.NewChangeRecordService(workingDir)
+	userService := core.NewUserService(workingDir)
 
 	slate := ui.NewSlate(lipgloss.Color("82"))
 
@@ -34,6 +35,7 @@ func initializeCommands() []*cli.Command {
 	statusHandler := handler.NewStatusHandler(envService, slate)
 	runHandler := handler.NewRunHandler(envService, cryptService, projectService, slate)
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
+	loginHandler := handler.NewLoginHandler(userService, slate)
 
 	return []*cli.Command{
 		newInitCommand(projectHandler),
@@ -46,6 +48,7 @@ func initializeCommands() []*cli.Command {
 		newLogCommand(logHandler),
 		newStatusCommand(statusHandler),
 		newRunCommand(runHandler),
+		newLoginCommand(loginHandler),
 		newVersionCommand(),
 	}
 }
