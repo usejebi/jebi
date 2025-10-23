@@ -33,13 +33,6 @@ func NewUserServiceWithKeystore(workingDir string, ks keystore.KeyStore) *userSe
 	}
 }
 
-// Login authenticates with the server and returns a token
-func (u *userService) Login(username, password, server string) (string, error) {
-	// TODO: Implement actual authentication logic
-	// For now, return a placeholder token
-	return "placeholder-auth-token", fmt.Errorf("login not implemented yet")
-}
-
 // AuthenticateWithBrowser opens a browser for OAuth-style authentication
 func (u *userService) AuthenticateWithBrowser(serverURL string) (*AuthResponse, error) {
 	// Start local callback server

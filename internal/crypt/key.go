@@ -21,21 +21,34 @@ func (s *cryptService) GenerateKey() (encoded string, err error) {
 }
 
 func (s *cryptService) SaveKey(encodedKey string) error {
-	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(s.keyFilePath), 0700); err != nil {
-		return fmt.Errorf("failed to create key directory: %w", err)
+	// Try to save to keystore first
+	if err := s.keystore.Set("encryption_key", encodedKey); err != nil {
+		// Fallback to file storage if keystore fails
+		if err := os.MkdirAll(filepath.Dir(s.keyFilePath), 0700); err != nil {
+			return fmt.Errorf("failed to create key directory: %w", err)
+		}
+		if err := os.WriteFile(s.keyFilePath, []byte(encodedKey), 0600); err != nil {
+			return fmt.Errorf("failed to save key to both keystore and file: keystore error: %v, file error: %w", err, err)
+		}
 	}
-	return os.WriteFile(s.keyFilePath, []byte(encodedKey), 0600)
+	return nil
 }
 
 func (s *cryptService) LoadKey() ([]byte, error) {
-	encodedKey, err := s.readFromFile()
+	// Try to load from keystore first
+	var encodedKey string
+	err := s.keystore.Get("encryption_key", &encodedKey)
 	if err != nil {
-		return nil, err
+		// Fallback to file storage if keystore fails
+		encodedKey, err = s.readFromFile()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load key from both keystore and file: %w", err)
+		}
 	}
+
 	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode key from file: %w", err)
+		return nil, fmt.Errorf("failed to decode key: %w", err)
 	}
 	return decodedKey, nil
 }

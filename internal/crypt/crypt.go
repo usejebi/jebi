@@ -11,17 +11,28 @@ import (
 
 	"github.com/jawahars16/jebi/internal/core"
 	jio "github.com/jawahars16/jebi/internal/io"
+	"github.com/jawahars16/jebi/internal/keystore"
 )
 
 type cryptService struct {
 	workingDir  string
 	keyFilePath string
+	keystore    keystore.KeyStore
 }
 
 func NewService(workingDir string) *cryptService {
 	return &cryptService{
 		workingDir:  workingDir,
 		keyFilePath: filepath.Join(workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFilePath),
+		keystore:    keystore.NewDefault(workingDir),
+	}
+}
+
+func NewServiceWithKeystore(workingDir string, ks keystore.KeyStore) *cryptService {
+	return &cryptService{
+		workingDir:  workingDir,
+		keyFilePath: filepath.Join(workingDir, fmt.Sprintf(".%s", core.AppName), core.KeyFilePath),
+		keystore:    ks,
 	}
 }
 
