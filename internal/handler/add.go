@@ -79,7 +79,7 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to add secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, core.ActionAdd, key); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, core.ActionAdd, key, secret.Value); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 

@@ -102,7 +102,8 @@ func TestHappyPath(t *testing.T) {
 	// Step 3: commit
 	out, err = runCLI(ctx, t, bin, tmpDir, "commit", "-m", "Add API key")
 	assert.NoError(t, err, out)
-	assert.Contains(t, out, "\n  [environment dev] Add API key\n  1 additions(+), 0 deletions(-), 0 changes(~)\n\n\n", out)
+	assert.Contains(t, out, "[environment dev] Add API key\n  Commit ID:", out)
+	assert.Contains(t, out, "1 additions(+), 0 deletions(-), 0 changes(~)", out)
 
 	// Step 4: status
 	out, err = runCLI(ctx, t, bin, tmpDir, "status")

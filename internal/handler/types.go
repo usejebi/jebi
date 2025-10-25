@@ -40,13 +40,8 @@ type secretService interface {
 	RemoveSecret(key, env string) error
 }
 
-type commitService interface {
-	AddCommit(env, message string, changes []core.Change) error
-	ListCommits(env string) ([]core.Commit, error)
-}
-
 type changeRecordService interface {
-	AddChangeRecord(env, action, key string) error
+	AddChangeRecord(env, action, key, value string) error
 	ClearPendingChanges() error
 }
 
@@ -57,6 +52,22 @@ type userService interface {
 	SaveCurrentUser(user core.User) error
 	LoadCurrentUser() (*core.User, error)
 	Logout() error
+}
+
+type commitService interface {
+	// Commit operations
+	AddCommit(env, message, author string, changes []core.Change) (*core.Commit, error)
+	GetCommit(env, commitID string) (*core.Commit, error)
+	ListCommits(env string) ([]core.Commit, error)
+
+	// HEAD operations
+	GetHead(env string) (*core.Head, error)
+	UpdateLocalHead(env, commitID string) error
+	UpdateRemoteHead(env, commitID string) error
+
+	// Status and state operations
+	ComputeState(env, upToCommitID string) (map[string]string, error)
+	GetCommitsSinceRemoteHead(env string) ([]core.Commit, error)
 }
 
 type apiClient interface {

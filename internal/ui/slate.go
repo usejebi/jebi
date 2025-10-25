@@ -83,18 +83,18 @@ func (s *slate) WriteStatus(changes []core.Change) {
 	// Find longest label for alignment
 	maxLen := 0
 	for _, c := range changes {
-		if l := len(labelMap[c.Action]); l > maxLen {
+		if l := len(labelMap[string(c.Type)]); l > maxLen {
 			maxLen = l
 		}
 	}
 
 	// Print all aligned lines
 	for _, c := range changes {
-		label := labelMap[c.Action]
+		label := labelMap[string(c.Type)]
 		var style lipgloss.Style
 		var symbol string
 
-		switch c.Action {
+		switch c.Type {
 		case core.ActionAdd:
 			style = addStyle
 			symbol = "+"

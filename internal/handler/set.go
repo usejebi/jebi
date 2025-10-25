@@ -71,7 +71,7 @@ func (s *Set) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to set secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, action, key); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, action, key, secret.Value); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 

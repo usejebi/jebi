@@ -38,9 +38,17 @@ func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
+	head, err := h.commitService.GetHead(env)
+	if err != nil {
+		return err
+	}
+
 	var output string
-	for i := len(commits) - 1; i >= 0; i-- { // reverse order (latest first)
-		c := commits[i]
+	for _, c := range commits {
+		if c.ID == head.LocalHead {
+			output += fmt.Sprintf("commit %s  (HEAD -> %s) \nDate: %s\n `%s` \n\n", c.ID, env, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
+			continue
+		}
 		output += fmt.Sprintf("commit %s \nDate: %s\n `%s` \n\n", c.ID, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
 	}
 	h.slate.RenderMarkdown(output)

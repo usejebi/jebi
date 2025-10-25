@@ -31,14 +31,14 @@ func initializeCommands() []*cli.Command {
 	removeHandler := handler.NewRemoveHandler(cryptService, envService, secretService, changeRecordService, slate)
 	projectHandler := handler.NewInitHandler(appService, projectService, envService, cryptService, slate)
 	envHandler := handler.NewEnvHandler(envService, slate)
-	commitHandler := handler.NewCommitHandler(envService, commitService, changeRecordService, slate)
+	commitHandler := handler.NewCommitHandler(envService, commitService, changeRecordService, userService, secretService, projectService, slate)
 	exportHandler := handler.NewExportHandler(envService, cryptService, projectService, slate)
 	statusHandler := handler.NewStatusHandler(envService, slate)
 	runHandler := handler.NewRunHandler(envService, cryptService, projectService, slate)
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
 	loginHandler := handler.NewLoginHandler(userService, slate)
 	apiClient := remote.NewAPIClient(core.DefaultServerURL)
-	pushHandler := handler.NewPushHandler(projectService, envService, secretService, apiClient, slate)
+	pushHandler := handler.NewPushHandler(projectService, envService, secretService, commitService, apiClient, slate)
 
 	return []*cli.Command{
 		newInitCommand(projectHandler),
