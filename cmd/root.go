@@ -8,6 +8,7 @@ import (
 	"github.com/jawahars16/jebi/internal/core"
 	"github.com/jawahars16/jebi/internal/crypt"
 	"github.com/jawahars16/jebi/internal/handler"
+	"github.com/jawahars16/jebi/internal/remote"
 	"github.com/jawahars16/jebi/internal/ui"
 	"github.com/urfave/cli/v3"
 )
@@ -36,6 +37,8 @@ func initializeCommands() []*cli.Command {
 	runHandler := handler.NewRunHandler(envService, cryptService, projectService, slate)
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
 	loginHandler := handler.NewLoginHandler(userService, slate)
+	apiClient := remote.NewAPIClient(core.DefaultServerURL)
+	pushHandler := handler.NewPushHandler(projectService, envService, secretService, apiClient, slate)
 
 	return []*cli.Command{
 		newInitCommand(projectHandler),
@@ -49,6 +52,7 @@ func initializeCommands() []*cli.Command {
 		newStatusCommand(statusHandler),
 		newRunCommand(runHandler),
 		newLoginCommand(loginHandler),
+		newPushCommand(pushHandler),
 		newVersionCommand(),
 	}
 }

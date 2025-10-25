@@ -2,7 +2,7 @@ package core
 
 // Build-time variables (can be set with -ldflags)
 var (
-	LoginURL = "http://localhost:3000/auth/login" // Can be overridden at build time
+	LoginURL = "http://127.0.0.1:3000/auth/login" // Can be overridden at build time
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 
 	DefaultEnvironment = "dev"
 	DefaultProjectName = "my-jebi-project"
-	DefaultServerURL   = "https://api.jebi.dev"
+	DefaultServerURL   = "http://127.0.0.1:54321"
 )
 
 const (

@@ -9,15 +9,29 @@ const (
 )
 
 type Project struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type Environment struct {
+	Name      string    `json:"name"`
+	ProjectID string    `json:"project_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Secret struct {
-	Value     string    `json:"value"`
-	Nonce     string    `json:"nonce"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Key             string    `json:"key"`
+	Value           string    `json:"value"`
+	Nonce           string    `json:"nonce"`
+	ProjectId       string    `json:"project_id"`
+	EnvironmentName string    `json:"environment_name"`
+	NoSecret        bool      `json:"nosecret"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type Commit struct {

@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/jawahars16/jebi/internal/core"
+import (
+	"github.com/jawahars16/jebi/internal/core"
+	"github.com/jawahars16/jebi/internal/remote"
+)
 
 type appService interface {
 	CreateAppDir() error
@@ -33,6 +36,7 @@ type envService interface {
 type secretService interface {
 	SetSecret(key, env string, secret core.Secret) (string, error)
 	AddSecret(key, env string, secret core.Secret) error
+	ListSecrets(projectId, env string) ([]core.Secret, error)
 	RemoveSecret(key, env string) error
 }
 
@@ -53,6 +57,10 @@ type userService interface {
 	SaveCurrentUser(user core.User) error
 	LoadCurrentUser() (*core.User, error)
 	Logout() error
+}
+
+type apiClient interface {
+	Push(req remote.PushRequest) (remote.PushResponse, error)
 }
 
 type slate interface {

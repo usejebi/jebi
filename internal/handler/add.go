@@ -70,6 +70,7 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
+	fmt.Printf("Current environment: %s\n", env)
 	if err := s.secretService.AddSecret(key, env, secret); err != nil {
 		if errors.Is(err, core.ErrSecretAlreadyExists) {
 			s.slate.ShowError(fmt.Sprintf("secret with key '%s' already exists", key))

@@ -100,3 +100,33 @@ func (s *secretService) RemoveSecret(key, env string) error {
 	}
 	return nil
 }
+
+func (s *secretService) ListSecrets(projectId, env string) ([]Secret, error) {
+	envDir := s.envDir(env)
+	secretPath := filepath.Join(envDir, SecretFileName)
+
+	if _, err := os.Stat(secretPath); os.IsNotExist(err) {
+		// If secret file does not exist, return empty slice
+		return []Secret{}, nil
+	}
+
+	data, err := io.ReadJSONFile[map[string]Secret](secretPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read secrets: %w", err)
+	}
+
+	var secrets []Secret
+	for key, secret := range data {
+		secrets = append(secrets, Secret{
+			Key:             key,
+			Value:           secret.Value,
+			Nonce:           secret.Nonce,
+			ProjectId:       projectId,
+			EnvironmentName: env,
+			NoSecret:        secret.NoSecret,
+			CreatedAt:       secret.CreatedAt,
+			UpdatedAt:       secret.UpdatedAt,
+		})
+	}
+	return secrets, nil
+}
