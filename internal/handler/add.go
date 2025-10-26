@@ -43,27 +43,27 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 	key := cmd.Args().Get(0)
 	value := cmd.Args().Get(1)
 
-	encryptionKey, err := s.cryptService.LoadKey()
+	project, err := s.projectService.LoadProjectConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get project: %w", err)
+	}
+
+	encryptionKey, err := s.cryptService.LoadKey(project.ID)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve encryption key: %w", err)
 	}
 
-	var secret core.Secret
-
 	noSecret := cmd.Bool("no-secret")
+	secret := core.Secret{NoSecret: noSecret}
 	if noSecret {
-		secret = core.Secret{
-			Value: value,
-		}
+		secret.Value = value
 	} else {
 		ciphertext, nonce, err := s.cryptService.Encrypt(encryptionKey, value)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt value: %w", err)
 		}
-		secret = core.Secret{
-			Value: ciphertext,
-			Nonce: nonce,
-		}
+		secret.Value = ciphertext
+		secret.Nonce = nonce
 	}
 
 	env, err := s.envService.CurrentEnv()
@@ -79,7 +79,7 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to add secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, core.ActionAdd, key, secret.Value); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, core.ActionAdd, key, secret.Value, secret.Nonce, secret.NoSecret); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 

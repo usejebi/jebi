@@ -151,7 +151,7 @@ func (s *commitService) UpdateRemoteHead(env, commitID string) error {
 }
 
 // ComputeState computes the final state of secrets up to a specific commit
-func (s *commitService) ComputeState(env, upToCommitID string) (map[string]string, error) {
+func (s *commitService) ComputeState(env, upToCommitID string) (map[string]Secret, error) {
 	commits, err := s.loadCommits(env)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load commits: %w", err)
@@ -164,12 +164,17 @@ func (s *commitService) ComputeState(env, upToCommitID string) (map[string]strin
 	}
 
 	// Apply changes in chronological order
-	stateMap := make(map[string]string)
+	stateMap := make(map[string]Secret)
 	for _, commit := range commitChain {
 		for _, change := range commit.Changes {
 			switch change.Type {
 			case ChangeTypeAdd, ChangeTypeModify:
-				stateMap[change.Key] = change.Value
+				stateMap[change.Key] = Secret{
+					Key:      change.Key,
+					Value:    change.Value,
+					Nonce:    change.Nonce,
+					NoSecret: change.NoSecret,
+				}
 			case ChangeTypeRemove:
 				delete(stateMap, change.Key)
 			}

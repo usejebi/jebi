@@ -19,7 +19,7 @@ func NewChangeRecordService(workingDir string) *changeRecordService {
 	}
 }
 
-func (s *changeRecordService) AddChangeRecord(env, action, key, value string) error {
+func (s *changeRecordService) AddChangeRecord(env, action, key, value, nonce string, noSecret bool) error {
 	curr, err := io.ReadJSONFile[CurrentEnv](s.currentEnvPath)
 	if err != nil {
 		return fmt.Errorf("failed to read current environment: %w", err)
@@ -28,9 +28,11 @@ func (s *changeRecordService) AddChangeRecord(env, action, key, value string) er
 		curr.Changes = []Change{}
 	}
 	curr.Changes = append(curr.Changes, Change{
-		Type:  ChangeType(action),
-		Key:   key,
-		Value: value,
+		Type:     ChangeType(action),
+		Key:      key,
+		Value:    value,
+		Nonce:    nonce,
+		NoSecret: noSecret,
 	})
 	curr.Changes = normalizeChanges(curr.Changes)
 
@@ -77,9 +79,11 @@ func normalizeChanges(changes []Change) []Change {
 		case existing.Type == ChangeTypeRemove && change.Type == ChangeTypeAdd:
 			// Remove then add = modify (if it existed before) or add (if new)
 			changeMap[change.Key] = Change{
-				Type:  ChangeTypeAdd, // Treat as add for simplicity
-				Key:   change.Key,
-				Value: change.Value,
+				Type:     ChangeTypeAdd, // Treat as add for simplicity
+				Key:      change.Key,
+				Value:    change.Value,
+				Nonce:    change.Nonce,
+				NoSecret: change.NoSecret,
 			}
 		default:
 			// Later change wins

@@ -43,13 +43,6 @@ func (c *client) post(url string, jsonData []byte) (*http.Response, error) {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 
-	// Check for HTTP errors
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		// Close the body here since we're not returning it
-		resp.Body.Close()
-		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
-	}
-
 	// Return the response with body open - caller is responsible for closing it
 	return resp, nil
 }

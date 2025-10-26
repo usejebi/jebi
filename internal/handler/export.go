@@ -38,7 +38,7 @@ func (h *Export) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to get project: %w", err)
 	}
 
-	secrets, err := h.cryptService.LoadSecrets(env)
+	secrets, err := h.cryptService.LoadSecrets(project.ID, env)
 	if err != nil {
 		return fmt.Errorf("failed to load secrets: %w", err)
 	}

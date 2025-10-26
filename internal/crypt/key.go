@@ -20,9 +20,9 @@ func (s *cryptService) GenerateKey() (encoded string, err error) {
 	return encoded, nil
 }
 
-func (s *cryptService) SaveKey(encodedKey string) error {
+func (s *cryptService) SaveKey(encodedKey, project string) error {
 	// Try to save to keystore first
-	if err := s.keystore.Set("encryption_key", encodedKey); err != nil {
+	if err := s.keystore.Set(fmt.Sprintf("%s:%s", project, core.KeyEncryptionKey), encodedKey); err != nil {
 		// Fallback to file storage if keystore fails
 		if err := os.MkdirAll(filepath.Dir(s.keyFilePath), 0700); err != nil {
 			return fmt.Errorf("failed to create key directory: %w", err)
@@ -34,10 +34,10 @@ func (s *cryptService) SaveKey(encodedKey string) error {
 	return nil
 }
 
-func (s *cryptService) LoadKey() ([]byte, error) {
+func (s *cryptService) LoadKey(project string) ([]byte, error) {
 	// Try to load from keystore first
 	var encodedKey string
-	err := s.keystore.Get("encryption_key", &encodedKey)
+	err := s.keystore.Get(fmt.Sprintf("%s:%s", project, core.KeyEncryptionKey), &encodedKey)
 	if err != nil {
 		// Fallback to file storage if keystore fails
 		encodedKey, err = s.readFromFile()

@@ -46,10 +46,14 @@ func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 	var output string
 	for _, c := range commits {
 		if c.ID == head.LocalHead {
-			output += fmt.Sprintf("commit %s  (HEAD -> %s) \nDate: %s\n `%s` \n\n", c.ID, env, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
+			output += fmt.Sprintf("commit %s  (HEAD -> %s) \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, env, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
 			continue
 		}
-		output += fmt.Sprintf("commit %s \nDate: %s\n `%s` \n\n", c.ID, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
+		if c.ID == head.RemoteHead {
+			output += fmt.Sprintf("commit %s  (origin/%s) \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, env, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
+			continue
+		}
+		output += fmt.Sprintf("commit %s \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
 	}
 	h.slate.RenderMarkdown(output)
 	return nil

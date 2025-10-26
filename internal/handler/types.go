@@ -19,9 +19,9 @@ type cryptService interface {
 	GenerateKey() (string, error)
 	Encrypt(key []byte, plaintext string) (ciphertextB64, nonceB64 string, err error)
 	Decrypt(key []byte, ciphertextB64, nonceB64 string) (string, error)
-	LoadSecrets(env string) (map[string]string, error)
-	SaveKey(key string) error
-	LoadKey() ([]byte, error)
+	LoadSecrets(project, env string) (map[string]string, error)
+	SaveKey(key, project string) error
+	LoadKey(project string) ([]byte, error)
 }
 
 type envService interface {
@@ -41,7 +41,7 @@ type secretService interface {
 }
 
 type changeRecordService interface {
-	AddChangeRecord(env, action, key, value string) error
+	AddChangeRecord(env, action, key, value, nonce string, nosecret bool) error
 	ClearPendingChanges() error
 }
 
@@ -66,7 +66,7 @@ type commitService interface {
 	UpdateRemoteHead(env, commitID string) error
 
 	// Status and state operations
-	ComputeState(env, upToCommitID string) (map[string]string, error)
+	ComputeState(env, upToCommitID string) (map[string]core.Secret, error)
 	GetCommitsSinceRemoteHead(env string) ([]core.Commit, error)
 }
 

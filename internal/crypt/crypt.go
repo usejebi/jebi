@@ -88,8 +88,8 @@ func (s *cryptService) Decrypt(key []byte, ciphertextB64, nonceB64 string) (stri
 	return string(plaintext), nil
 }
 
-func (s *cryptService) LoadSecrets(env string) (map[string]string, error) {
-	rawKey, err := s.LoadKey()
+func (s *cryptService) LoadSecrets(project, env string) (map[string]string, error) {
+	rawKey, err := s.LoadKey(project)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load encryption key: %w", err)
 	}

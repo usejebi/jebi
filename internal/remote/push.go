@@ -3,10 +3,15 @@ package remote
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 const (
 	PushEndpoint = "/functions/v1/push"
+)
+
+var (
+	ErrProjectNameAlreadyExists = fmt.Errorf("project name already exists on remote")
 )
 
 func (c *client) Push(req PushRequest) (PushResponse, error) {
@@ -24,6 +29,19 @@ func (c *client) Push(req PushRequest) (PushResponse, error) {
 		return PushResponse{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var errorResponse ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			return PushResponse{}, fmt.Errorf("failed to decode error response: %w", err)
+		}
+
+		if resp.StatusCode == http.StatusConflict && errorResponse.Code == "PROJECT_NAME_ALREADY_EXISTS" {
+			return PushResponse{}, ErrProjectNameAlreadyExists
+		}
+
+		return PushResponse{}, fmt.Errorf("push failed: %s", errorResponse.Message)
+	}
 
 	// Parse response
 	var pushResponse PushResponse

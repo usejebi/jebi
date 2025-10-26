@@ -83,7 +83,7 @@ This will initialize a new jebi project:
 	}
 
 	// Save project configuration
-	_, err = h.projectService.SaveProjectConfig(projectName, projectDescription)
+	projectId, err := h.projectService.SaveProjectConfig(projectName, projectDescription)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ This will initialize a new jebi project:
 	}
 
 	// Save the generated key
-	if err := h.cryptService.SaveKey(encodedKey); err != nil {
+	if err := h.cryptService.SaveKey(encodedKey, projectId); err != nil {
 		return fmt.Errorf("failed to save symmetric key: %w", err)
 	}
 

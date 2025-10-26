@@ -42,6 +42,9 @@ type Commit struct {
 	Timestamp time.Time `json:"timestamp"`
 	Changes   []Change  `json:"changes"`
 	ParentID  string    `json:"parent_id,omitempty"` // Empty for first commit
+
+	ProjectID   string `json:"project_id,omitempty"`
+	Environment string `json:"environment,omitempty"`
 }
 
 // Head represents the HEAD pointers for an environment
@@ -80,9 +83,11 @@ const (
 // - Diff computation (by comparing parent state vs new value)
 // - Rollback operations (by applying reverse changes)
 type Change struct {
-	Type  ChangeType `json:"type"`
-	Key   string     `json:"key"`
-	Value string     `json:"value,omitempty"` // Empty for remove operations; new value for add/modify
+	Type     ChangeType `json:"type"`
+	Key      string     `json:"key"`
+	Value    string     `json:"value,omitempty"`    // Empty for remove operations; new value for add/modify
+	Nonce    string     `json:"nonce,omitempty"`    // Nonce for encrypted secrets; empty for no-secret entries
+	NoSecret bool       `json:"nosecret,omitempty"` // Whether the secret is a no-secret entry
 }
 
 type User struct {

@@ -7,9 +7,9 @@ import (
 type PushRequest struct {
 	Project        core.Project     `json:"project"`
 	Environment    core.Environment `json:"environment"`
-	Commits        []core.Commit    `json:"commits"`                    // New commits to push
-	FinalState     []core.Secret    `json:"final_state"`                // Final computed secrets with all metadata
-	RemoteHeadHash string           `json:"remote_head_hash,omitempty"` // For conflict detection
+	Commits        []core.Commit    `json:"commits"`                  // New commits to push
+	FinalState     []core.Secret    `json:"finalState"`               // Final computed secrets with all metadata
+	RemoteHeadHash string           `json:"remoteHeadHash,omitempty"` // For conflict detection
 }
 
 type PushResponse struct {
@@ -20,4 +20,9 @@ type PushResponse struct {
 	UpdatedAt     string `json:"updated_at"`
 	IsFirstPush   bool   `json:"is_first_push"`
 	CommitsPushed int    `json:"commits_pushed"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Code    string `json:"code"`
 }

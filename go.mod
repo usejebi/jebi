@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.4.1
+	github.com/zalando/go-keyring v0.2.6
 )
 
 require (
@@ -36,7 +37,6 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect
-	github.com/zalando/go-keyring v0.2.6 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.31.0 // indirect

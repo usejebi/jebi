@@ -51,7 +51,7 @@ func (s *Remove) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to remove secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, core.ActionRemove, key, ""); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, core.ActionRemove, key, "", "", false); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 

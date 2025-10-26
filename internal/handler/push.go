@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jawahars16/jebi/internal/core"
@@ -30,7 +31,6 @@ func NewPushHandler(projectService projectService, envService envService, secret
 }
 
 func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
-	h.slate.ShowHeader("Pushing project to remote server...")
 
 	// Load project configuration
 	project, err := h.projectService.LoadProjectConfig()
@@ -55,8 +55,13 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 
 	// Check if there are any commits to push
 	if len(commitsToPush) == 0 {
-		fmt.Println("✅ No new commits to push. Everything is up to date.")
+		fmt.Println("No new commits to push. Everything up-to-date.")
 		return nil
+	}
+	// add metadata to commits
+	for i := range commitsToPush {
+		commitsToPush[i].ProjectID = project.ID
+		commitsToPush[i].Environment = currentEnv
 	}
 
 	// Get current HEAD to compute final state
@@ -88,20 +93,10 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 
 	// Build final state by combining committed values with metadata
 	var finalState []core.Secret
-	for key, value := range stateMap {
-		if diskSecret, exists := secretsMap[key]; exists {
-			// Use committed value but preserve metadata from disk
-			diskSecret.Value = value
-			finalState = append(finalState, diskSecret)
-		} else {
-			// Create a basic secret if not found on disk (shouldn't happen in normal cases)
-			finalState = append(finalState, core.Secret{
-				Key:             key,
-				Value:           value,
-				ProjectId:       project.ID,
-				EnvironmentName: currentEnv,
-			})
-		}
+	for _, value := range stateMap {
+		value.EnvironmentName = currentEnv
+		value.ProjectId = project.ID
+		finalState = append(finalState, value)
 	}
 
 	// Create environment object for API
@@ -118,12 +113,15 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		FinalState:     finalState,
 		RemoteHeadHash: head.RemoteHead,
 	}
-
-	fmt.Printf("Pushing %d commits with %d secrets...\n", len(commitsToPush), len(finalState))
+	h.slate.ShowHeader(fmt.Sprintf("Pushing %d commits with %d secrets...\n", len(commitsToPush), len(finalState)))
 
 	// Make the push request using injected API client
 	response, err := h.apiClient.Push(pushReq)
 	if err != nil {
+		if errors.Is(err, remote.ErrProjectNameAlreadyExists) {
+			h.slate.ShowError(fmt.Sprintf("Project with name '%s' already exists on remote. Please rename your local project and try again.", project.Name))
+			return nil
+		}
 		h.slate.ShowError(fmt.Sprintf("Failed to push project: %v", err))
 		return nil
 	}

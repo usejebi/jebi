@@ -32,12 +32,17 @@ func (h *Run) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("no command provided; usage: jebi run -- <command> [args...]")
 	}
 
+	project, err := h.projectService.LoadProjectConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get project: %w", err)
+	}
+
 	currentEnv, err := h.envService.CurrentEnv()
 	if err != nil {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
 
-	secrets, err := h.cryptService.LoadSecrets(currentEnv)
+	secrets, err := h.cryptService.LoadSecrets(project.ID, currentEnv)
 	if err != nil {
 		return fmt.Errorf("failed to load secrets: %w", err)
 	}
