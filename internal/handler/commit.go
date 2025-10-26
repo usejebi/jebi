@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jawahars16/jebi/internal/core"
+	"github.com/jawahars16/jebi/internal/ui"
 	"github.com/urfave/cli/v3"
 )
 
@@ -80,28 +80,16 @@ func (h *Commit) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to clear uncommitted changes: %w", err)
 	}
 
-	// Count changes by type for output
-	var (
-		output    string
-		additions int
-		deletions int
-		changes   int
-	)
-
-	for _, change := range currentEnv.Changes {
-		switch change.Type {
-		case core.ChangeTypeAdd:
-			additions++
-		case core.ChangeTypeRemove:
-			deletions++
-		case core.ChangeTypeModify:
-			changes++
-		}
+	// Get HEAD information for consistent rendering
+	head, err := h.commitService.GetHead(env)
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD: %w", err)
 	}
 
-	output += fmt.Sprintf("[environment `%s`] %s\n", env, msg)
-	output += fmt.Sprintf("Commit ID: %s\n", commit.ID)
-	output += fmt.Sprintf(" %d additions(+), %d deletions(-), %d changes(~)\n", additions, deletions, changes)
-	h.slate.RenderMarkdown(output)
+	// Use the shared commit renderer for consistent formatting
+	renderer := ui.NewCommitRenderer(h.slate)
+	renderer.RenderSingleCommit(*commit, head)
 	return nil
 }
+
+// displayCommit renders the newly created commit in a beautiful format

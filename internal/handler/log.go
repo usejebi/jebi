@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jawahars16/jebi/internal/ui"
 	"github.com/urfave/cli/v3"
 )
 
@@ -24,7 +25,14 @@ func NewLogHandler(envService envService, commitService commitService, slate sla
 func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 	env, err := h.envService.CurrentEnv()
 	if err != nil {
-		fmt.Printf("⚠️ Current environment is not set. Use `jebi use <env name>` to set the current environment\n")
+		h.slate.WriteStyledText("Current environment is not set", ui.StyleOptions{
+			Color: "178", // Amber
+			Bold:  true,
+		})
+		h.slate.WriteIndentedText("Use `jebi env use <env name>` to set the current environment", ui.StyleOptions{
+			Color:  "248", // Gray
+			Italic: true,
+		})
 		return nil
 	}
 
@@ -34,7 +42,14 @@ func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if len(commits) == 0 {
-		fmt.Println("(no commits yet)")
+		h.slate.WriteStyledText("No commits yet in this environment", ui.StyleOptions{
+			Color:  "248", // Gray
+			Italic: true,
+		})
+		h.slate.WriteIndentedText("Use `jebi commit -m \"your message\"` to create your first commit", ui.StyleOptions{
+			Color:  "248", // Gray
+			Italic: true,
+		})
 		return nil
 	}
 
@@ -43,18 +58,25 @@ func (h *Log) Handle(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	var output string
-	for _, c := range commits {
-		if c.ID == head.LocalHead {
-			output += fmt.Sprintf("commit %s  (HEAD -> %s) \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, env, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
-			continue
-		}
-		if c.ID == head.RemoteHead {
-			output += fmt.Sprintf("commit %s  (origin/%s) \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, env, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
-			continue
-		}
-		output += fmt.Sprintf("commit %s \nAuthor: %s\nDate: %s\n `%s` \n\n", c.ID, c.Author, c.Timestamp.Format("Mon Jan 2 15:04:05 2006 -0700"), c.Message)
+	// Show header
+	h.slate.WriteStyledText(fmt.Sprintf("Commit History - Environment: %s", env), ui.StyleOptions{
+		Color:  "82", // Light green
+		Bold:   true,
+		Margin: []int{0, 0, 1, 0}, // Bottom margin
+	})
+
+	// Display each commit
+	renderer := ui.NewCommitRenderer(h.slate)
+	for i, commit := range commits {
+		renderer.RenderCommit(commit, head, i > 0) // Add spacing for all but first commit
 	}
-	h.slate.RenderMarkdown(output)
+
+	// Show summary
+	h.slate.WriteStyledText(fmt.Sprintf("Total: %d commits", len(commits)), ui.StyleOptions{
+		Color:  "248", // Gray
+		Italic: true,
+		Margin: []int{1, 0, 0, 0}, // Top margin
+	})
+
 	return nil
 }

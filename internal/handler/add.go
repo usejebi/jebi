@@ -70,7 +70,7 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current environment: %w", err)
 	}
-	fmt.Printf("Current environment: %s\n", env)
+
 	if err := s.secretService.AddSecret(key, env, secret); err != nil {
 		if errors.Is(err, core.ErrSecretAlreadyExists) {
 			s.slate.ShowError(fmt.Sprintf("secret with key '%s' already exists", key))
@@ -79,10 +79,10 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to add secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, core.ActionAdd, key, secret.Value, secret.Nonce, secret.NoSecret); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, string(core.ChangeTypeAdd), key, secret.Value, secret.Nonce, secret.NoSecret); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 
-	fmt.Printf("✅ Secret '%s' added successfully!\n", key)
+	s.slate.ShowSecretOperation("added successfully", key, env, noSecret)
 	return nil
 }

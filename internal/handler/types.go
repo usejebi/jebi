@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"github.com/charmbracelet/lipgloss"
 	"github.com/jawahars16/jebi/internal/core"
 	"github.com/jawahars16/jebi/internal/remote"
+	"github.com/jawahars16/jebi/internal/ui"
 )
 
 type appService interface {
@@ -82,4 +84,10 @@ type slate interface {
 	RenderMarkdown(md string)
 	ShowWarning(msg string)
 	ShowError(msg string)
+	WriteStyledText(text string, options ui.StyleOptions)
+	WriteColoredText(text string, color lipgloss.Color)
+	WriteIndentedText(text string, options ui.StyleOptions)
+	ShowSuccess(message string)
+	ShowEnvironmentContext(env string)
+	ShowSecretOperation(operation, key, env string, isPlaintext bool)
 }

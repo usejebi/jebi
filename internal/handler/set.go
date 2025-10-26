@@ -14,6 +14,7 @@ type Set struct {
 	secretService       secretService
 	changeRecordService changeRecordService
 	projectService      projectService
+	slate               slate
 }
 
 func NewSetHandler(
@@ -21,13 +22,15 @@ func NewSetHandler(
 	cryptService cryptService,
 	envService envService,
 	secretService secretService,
-	changeRecordService changeRecordService) *Set {
+	changeRecordService changeRecordService,
+	slate slate) *Set {
 	return &Set{
 		cryptService:        cryptService,
 		envService:          envService,
 		secretService:       secretService,
 		changeRecordService: changeRecordService,
 		projectService:      projectService,
+		slate:               slate,
 	}
 }
 
@@ -63,7 +66,8 @@ func (s *Set) Handle(ctx context.Context, cmd *cli.Command) error {
 	var secret core.Secret
 	if noSecret {
 		secret = core.Secret{
-			Value: value,
+			Value:    value,
+			NoSecret: true,
 		}
 	} else {
 		secret = core.Secret{
@@ -80,6 +84,6 @@ func (s *Set) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 
-	fmt.Printf("✅ Secret '%s' %s successfully!\n", key, action)
+	s.slate.ShowSecretOperation(action+" successfully", key, env, noSecret)
 	return nil
 }

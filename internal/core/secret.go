@@ -66,9 +66,9 @@ func (s *secretService) SetSecret(key, env string, secret Secret) (string, error
 	var action string
 	_, exists := data[key]
 	if !exists {
-		action = ActionAdd
+		action = string(ChangeTypeAdd)
 	} else {
-		action = ActionUpdate
+		action = string(ChangeTypeModify)
 	}
 
 	data[key] = secret

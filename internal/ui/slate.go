@@ -75,9 +75,9 @@ func (s *slate) WriteStatus(changes []core.Change) {
 
 	// Build action label map
 	labelMap := map[string]string{
-		core.ActionAdd:    "added:",
-		core.ActionUpdate: "modified:",
-		core.ActionRemove: "removed:",
+		string(core.ChangeTypeAdd):    "added:",
+		string(core.ChangeTypeModify): "modified:",
+		string(core.ChangeTypeRemove): "removed:",
 	}
 
 	// Find longest label for alignment
@@ -95,13 +95,13 @@ func (s *slate) WriteStatus(changes []core.Change) {
 		var symbol string
 
 		switch c.Type {
-		case core.ActionAdd:
+		case core.ChangeTypeAdd:
 			style = addStyle
 			symbol = "+"
-		case core.ActionUpdate:
+		case core.ChangeTypeModify:
 			style = modStyle
 			symbol = "~"
-		case core.ActionRemove:
+		case core.ChangeTypeRemove:
 			style = delStyle
 			symbol = "-"
 		default:
@@ -163,3 +163,208 @@ func (s *slate) ShowError(msg string) {
 	box := border.Render(msg)
 	fmt.Println(title.Render(box))
 }
+
+// StyleOptions defines styling options for WriteStyledText
+type StyleOptions struct {
+	Color       lipgloss.Color // Text color (e.g., "196" for red, "34" for green)
+	Background  lipgloss.Color // Background color (optional)
+	Bold        bool           // Make text bold
+	Italic      bool           // Make text italic
+	Underline   bool           // Make text underlined
+	Padding     []int          // Padding [top, right, bottom, left] or [vertical, horizontal] or [all]
+	Margin      []int          // Margin [top, right, bottom, left] or [vertical, horizontal] or [all]
+	Border      bool           // Add border around text
+	BorderColor lipgloss.Color // Border color (uses text color if not specified)
+}
+
+// WriteStyledText writes text to terminal with custom color and styling
+func (s *slate) WriteStyledText(text string, options StyleOptions) {
+	style := lipgloss.NewStyle()
+
+	// Apply color
+	if options.Color != "" {
+		style = style.Foreground(options.Color)
+	}
+
+	// Apply background color
+	if options.Background != "" {
+		style = style.Background(options.Background)
+	}
+
+	// Apply text styling
+	if options.Bold {
+		style = style.Bold(true)
+	}
+	if options.Italic {
+		style = style.Italic(true)
+	}
+	if options.Underline {
+		style = style.Underline(true)
+	}
+
+	// Apply padding
+	if len(options.Padding) > 0 {
+		switch len(options.Padding) {
+		case 1:
+			style = style.Padding(options.Padding[0])
+		case 2:
+			style = style.Padding(options.Padding[0], options.Padding[1])
+		case 4:
+			style = style.Padding(options.Padding[0], options.Padding[1], options.Padding[2], options.Padding[3])
+		}
+	}
+
+	// Apply margin
+	if len(options.Margin) > 0 {
+		switch len(options.Margin) {
+		case 1:
+			style = style.Margin(options.Margin[0])
+		case 2:
+			style = style.Margin(options.Margin[0], options.Margin[1])
+		case 4:
+			style = style.Margin(options.Margin[0], options.Margin[1], options.Margin[2], options.Margin[3])
+		}
+	}
+
+	// Apply border
+	if options.Border {
+		borderColor := options.BorderColor
+		if borderColor == "" {
+			borderColor = options.Color // Use text color if border color not specified
+		}
+		style = style.Border(lipgloss.RoundedBorder()).BorderForeground(borderColor)
+	}
+
+	fmt.Println(style.Render(text))
+}
+
+// WriteColoredText is a convenience function for simple colored text output
+func (s *slate) WriteColoredText(text string, color lipgloss.Color) {
+	s.WriteStyledText(text, StyleOptions{Color: color})
+}
+
+// WriteIndentedText writes text with default left padding and optional styling
+// Provides consistent indentation across the application
+func (s *slate) WriteIndentedText(text string, options StyleOptions) {
+	// Set default left padding if no padding is specified
+	if len(options.Padding) == 0 {
+		options.Padding = []int{0, 0, 0, 2} // [top, right, bottom, left] - 2 spaces left padding
+	} else {
+		// If padding is specified, ensure left padding is at least 2
+		switch len(options.Padding) {
+		case 1:
+			// Convert single value to [top, right, bottom, left] with minimum left padding
+			if options.Padding[0] < 2 {
+				options.Padding = []int{options.Padding[0], options.Padding[0], options.Padding[0], 2}
+			} else {
+				options.Padding = []int{options.Padding[0], options.Padding[0], options.Padding[0], options.Padding[0]}
+			}
+		case 2:
+			// Convert [vertical, horizontal] to [top, right, bottom, left] with minimum left padding
+			leftPadding := options.Padding[1]
+			if leftPadding < 2 {
+				leftPadding = 2
+			}
+			options.Padding = []int{options.Padding[0], options.Padding[1], options.Padding[0], leftPadding}
+		case 4:
+			// Ensure left padding (index 3) is at least 2
+			if options.Padding[3] < 2 {
+				options.Padding[3] = 2
+			}
+		}
+	}
+
+	s.WriteStyledText(text, options)
+}
+
+// ShowSuccess displays a success message with consistent styling
+func (s *slate) ShowSuccess(message string) {
+	s.WriteStyledText(message, StyleOptions{
+		Color:   "34", // Green
+		Bold:    true,
+		Padding: []int{0, 1, 0, 2}, // Left padding with some right padding
+	})
+}
+
+// ShowEnvironmentContext displays current environment information
+func (s *slate) ShowEnvironmentContext(env string) {
+	s.WriteStyledText(fmt.Sprintf("Environment: %s", env), StyleOptions{
+		Color:   "82", // Light green
+		Italic:  true,
+		Padding: []int{0, 0, 0, 2}, // Left padding only
+	})
+}
+
+// ShowSecretOperation displays information about a secret operation (add/set/remove)
+func (s *slate) ShowSecretOperation(operation, key, env string, isPlaintext bool) {
+	// Display environment context
+	s.ShowEnvironmentContext(env)
+
+	// Display operation summary
+	operationText := fmt.Sprintf("Secret '%s' %s", key, operation)
+	if isPlaintext {
+		operationText += " (plaintext)"
+	}
+
+	s.ShowSuccess(operationText)
+}
+
+/*
+Usage examples:
+
+// Simple colored text
+slate.WriteColoredText("Success!", "34") // Green text
+slate.WriteColoredText("Error!", "196")  // Red text
+
+// Indented text with default left padding (2 spaces)
+slate.WriteIndentedText("This is indented", StyleOptions{
+    Color: "34",  // Green text with automatic left padding
+    Bold:  true,
+})
+
+// Indented text with custom styling
+slate.WriteIndentedText("Status update", StyleOptions{
+    Color:   "214", // Orange
+    Italic:  true,
+    // Left padding will be at least 2, even if you specify less
+})
+
+// Styled text with multiple options
+slate.WriteStyledText("Important Notice", StyleOptions{
+    Color:     "214",    // Orange text
+    Bold:      true,     // Make it bold
+    Border:    true,     // Add border
+    Padding:   []int{1, 2}, // Vertical padding: 1, Horizontal: 2
+    Margin:    []int{1},    // All margins: 1
+})
+
+// Text with background
+slate.WriteStyledText("Highlighted", StyleOptions{
+    Color:      "15",  // White text
+    Background: "34",  // Green background
+    Bold:       true,
+    Padding:    []int{0, 1}, // Add some horizontal padding
+})
+
+// Underlined and italic text
+slate.WriteStyledText("Emphasized text", StyleOptions{
+    Color:     "213", // Pink
+    Italic:    true,
+    Underline: true,
+})
+
+// Success and context helpers
+slate.ShowSuccess("Operation completed successfully!")
+slate.ShowEnvironmentContext("production")
+slate.ShowSecretOperation("added", "DATABASE_URL", "production", false)
+
+Common colors:
+- "34"  - Green
+- "196" - Red
+- "214" - Orange
+- "82"  - Light green
+- "213" - Pink/Purple
+- "178" - Yellow/Amber
+- "15"  - White
+- "0"   - Black
+*/

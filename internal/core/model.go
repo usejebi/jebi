@@ -2,12 +2,6 @@ package core
 
 import "time"
 
-const (
-	ActionAdd    = "add"
-	ActionUpdate = "update"
-	ActionRemove = "remove"
-)
-
 type Project struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`

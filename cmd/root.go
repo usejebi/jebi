@@ -26,7 +26,7 @@ func initializeCommands() []*cli.Command {
 
 	slate := ui.NewSlate(lipgloss.Color("82"))
 
-	setHandler := handler.NewSetHandler(projectService, cryptService, envService, secretService, changeRecordService)
+	setHandler := handler.NewSetHandler(projectService, cryptService, envService, secretService, changeRecordService, slate)
 	addHandler := handler.NewAddHandler(projectService, cryptService, envService, secretService, changeRecordService, slate)
 	removeHandler := handler.NewRemoveHandler(cryptService, envService, secretService, changeRecordService, slate)
 	projectHandler := handler.NewInitHandler(appService, projectService, envService, cryptService, slate)
