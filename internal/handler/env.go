@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jawahars16/jebi/internal/core"
+	"github.com/jawahars16/jebi/internal/ui"
 	"github.com/urfave/cli/v3"
 )
 
@@ -44,7 +45,10 @@ func (h *Env) HandleNew(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.SetCurrentEnv(env); err != nil {
 		return err
 	}
-	h.slate.RenderMarkdown(fmt.Sprintf("Created environment `%s`", env))
+	h.slate.WriteIndentedText(fmt.Sprintf("Created environment '%s' and switched to it.\n", env), ui.StyleOptions{
+		Color: "34", // Green
+		Bold:  true,
+	})
 	return nil
 }
 
@@ -56,7 +60,10 @@ func (h *Env) HandleUse(ctx context.Context, cmd *cli.Command) error {
 	if err := h.envService.SetCurrentEnv(env); err != nil {
 		return err
 	}
-	h.slate.RenderMarkdown(fmt.Sprintf("Switched to environment `%s`", env))
+	h.slate.WriteIndentedText(fmt.Sprintf("Switched to '%s'\n", env), ui.StyleOptions{
+		Color: "34", // Green
+		Bold:  true,
+	})
 	h.HandleList(ctx, cmd)
 	return nil
 }

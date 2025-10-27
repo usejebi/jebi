@@ -42,20 +42,7 @@ func (h *Init) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	// Create hidden directory
-	if err := h.appService.CreateAppDir(); err != nil {
-		return err
-	}
-
-	h.slate.ShowHeader(`
-🚀 jebi — Git for Secrets
-Manage, version, and collaborate on secrets
-
-This will initialize a new jebi project:
- • Create .jebi vault directory
- • Setup your first environment (dev/prod)
- • Generate and encrypt a symmetric key
-	`)
+	h.slate.RenderInitHeader()
 
 	projectName := cmd.String("name")
 	projectDescription := cmd.String("description")
@@ -70,6 +57,11 @@ This will initialize a new jebi project:
 	}
 	if environment == "" {
 		environment = h.slate.PromptWithDefault("environment (dev/prod):", core.DefaultEnvironment)
+	}
+
+	// Create hidden directory
+	if err := h.appService.CreateAppDir(); err != nil {
+		return err
 	}
 
 	// Create environment config

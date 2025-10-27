@@ -14,8 +14,8 @@ func newExportCommand(handler *handler.Export) *cli.Command {
 		Usage: fmt.Sprintf("Export secrets in various formats: %s export [--env dev] [--format env]", core.AppName),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "format",
-				Aliases: []string{"f"},
+				Name:    "output",
+				Aliases: []string{"o"},
 				Usage:   "Output format (env, json, yaml, k8s)",
 				Value:   "env",
 			},

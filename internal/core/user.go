@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strconv"
 	"time"
@@ -273,4 +275,47 @@ func (u *userService) Logout() error {
 	}
 
 	return nil
+}
+
+// GetSystemUsername returns the current system username as a fallback for commits
+func (u *userService) GetSystemUsername() string {
+	// Try to get the current user from the system
+	if currentUser, err := user.Current(); err == nil && currentUser.Username != "" {
+		return currentUser.Username
+	}
+
+	// Fallback to environment variables
+	if username := os.Getenv("USER"); username != "" {
+		return username
+	}
+	if username := os.Getenv("USERNAME"); username != "" {
+		return username
+	}
+	if username := os.Getenv("LOGNAME"); username != "" {
+		return username
+	}
+
+	// Last resort fallback
+	return ""
+}
+
+// GetCommitAuthor returns the best available author information for commits
+// Priority: authenticated user email > system username > fallback
+func (u *userService) GetCommitAuthor() string {
+	// Try to get authenticated user first
+	if user, err := u.LoadCurrentUser(); err == nil && user != nil && user.Email != "" {
+		if user.DisplayName == "" {
+			return user.Email
+		}
+		return user.DisplayName
+	}
+
+	// Fall back to system username with a generic email domain
+	systemUser := u.GetSystemUsername()
+	if systemUser != "" {
+		return fmt.Sprintf("%s@local", systemUser)
+	}
+
+	// Final fallback
+	return "unknown@local"
 }

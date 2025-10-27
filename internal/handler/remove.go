@@ -55,6 +55,6 @@ func (s *Remove) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 
-	s.slate.ShowSecretOperation("removed successfully", key, env, false)
+	s.slate.ShowSecretOperation(core.ChangeTypeRemove, key, env, false)
 	return nil
 }

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/list"
@@ -13,7 +15,9 @@ import (
 )
 
 type slate struct {
-	accentColor lipgloss.Color
+	accentColor    lipgloss.Color
+	activeSpinner  *spinner.Model
+	spinnerMessage string
 }
 
 func NewSlate(accentColor lipgloss.Color) *slate {
@@ -152,7 +156,7 @@ func (s *slate) ShowWarning(msg string) {
 func (s *slate) ShowError(msg string) {
 	border := lipgloss.NewStyle().
 		Border(lipgloss.ThickBorder()).
-		BorderForeground(lipgloss.Color("196")). // bright red border
+		BorderForeground(lipgloss.Color("131")). // bright red border
 		Padding(0, 1).
 		Margin(1, 0, 1, 0)
 
@@ -296,17 +300,190 @@ func (s *slate) ShowEnvironmentContext(env string) {
 }
 
 // ShowSecretOperation displays information about a secret operation (add/set/remove)
-func (s *slate) ShowSecretOperation(operation, key, env string, isPlaintext bool) {
+func (s *slate) ShowSecretOperation(operation core.ChangeType, key, env string, isPlaintext bool) {
 	// Display environment context
 	s.ShowEnvironmentContext(env)
-
+	var (
+		color  lipgloss.Color
+		status string
+	)
+	switch operation {
+	case core.ChangeTypeAdd:
+		color = "34" // Green
+		status = "added"
+	case core.ChangeTypeModify:
+		color = "214" // Orange
+		status = "modified"
+	case core.ChangeTypeRemove:
+		color = "131" // Red
+		status = "removed"
+	default:
+		color = "15" // White
+	}
 	// Display operation summary
-	operationText := fmt.Sprintf("Secret '%s' %s", key, operation)
+	operationText := fmt.Sprintf("Secret '%s' %s successfully", key, status)
 	if isPlaintext {
 		operationText += " (plaintext)"
 	}
+	s.WriteIndentedText(operationText, StyleOptions{
+		Color: color,
+		Bold:  true,
+	})
+}
 
-	s.ShowSuccess(operationText)
+func (s *slate) RenderInitHeader() {
+	// Define color palette
+	subtle := lipgloss.Color("#94A3B8")  // Slate-400
+	success := lipgloss.Color("#22C55E") // Green-500
+
+	// Title styles
+	titleStyle := lipgloss.NewStyle().
+		Foreground(s.accentColor).
+		Bold(true)
+
+	taglineStyle := lipgloss.NewStyle().
+		Foreground(subtle).
+		Faint(true)
+
+	// Body styles
+	sectionStyle := lipgloss.NewStyle().
+		MarginLeft(0)
+
+	bulletStyle := lipgloss.NewStyle().
+		Foreground(s.accentColor)
+
+	textStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#E5E7EB")) // Neutral light gray
+
+	footerStyle := lipgloss.NewStyle().
+		Foreground(success).
+		MarginTop(1)
+
+	// Construct header text
+	header := fmt.Sprintf(
+		"%s  %s\n%s\n\n%s\n%s\n%s\n%s",
+		titleStyle.Render("jebi"),
+		taglineStyle.Render("\ngit for secrets"),
+		lipgloss.NewStyle().Faint(true).Render("───────────────────────────────────────────────"),
+		sectionStyle.Render("Initializing a new jebi project:"),
+		sectionStyle.Render(bulletStyle.Render("• ")+textStyle.Render("Set up your first environment (dev/prod)")),
+		sectionStyle.Render(bulletStyle.Render("• ")+textStyle.Render("Generate and encrypt a symmetric key")),
+		sectionStyle.Render(bulletStyle.Render("• ")+textStyle.Render("Prepare project for secret versioning")),
+	)
+
+	footer := footerStyle.Render("Let's get your secret workflow started!")
+
+	// Combine everything neatly in a styled box
+	boxStyle := lipgloss.NewStyle().
+		Padding(1, 2).
+		Border(lipgloss.ThickBorder()).
+		BorderForeground(s.accentColor)
+
+	fmt.Println(boxStyle.Render(header + "\n\n" + footer))
+}
+
+// StartSpinner starts a spinner with a message for long-running operations
+func (s *slate) StartSpinner(message string) {
+	s.activeSpinner = &spinner.Model{}
+	*s.activeSpinner = spinner.New()
+	s.activeSpinner.Spinner = spinner.Dot
+	s.activeSpinner.Style = lipgloss.NewStyle().Foreground(s.accentColor)
+	s.spinnerMessage = message
+
+	// Print initial spinner state
+	fmt.Printf("\r%s %s", s.activeSpinner.View(), message)
+}
+
+// UpdateSpinner updates the spinner animation and optionally changes the message
+func (s *slate) UpdateSpinner(newMessage ...string) {
+	if s.activeSpinner == nil {
+		return
+	}
+
+	// Update message if provided
+	if len(newMessage) > 0 && newMessage[0] != "" {
+		s.spinnerMessage = newMessage[0]
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	// Tick the spinner animation
+	cmd := s.activeSpinner.Tick()
+	if cmd != nil {
+		// Update the spinner model
+		newModel, _ := s.activeSpinner.Update(cmd)
+		*s.activeSpinner = newModel
+	}
+
+	// Clear the line and print updated spinner
+	fmt.Printf("\r\033[K%s %s", s.activeSpinner.View(), s.spinnerMessage)
+}
+
+// StopSpinner stops the spinner and shows a completion message
+func (s *slate) StopSpinner() {
+	if s.activeSpinner == nil {
+		return
+	}
+
+	// Clear the spinner line
+	fmt.Printf("\r\033[K")
+	// Reset spinner state
+	s.activeSpinner = nil
+	s.spinnerMessage = ""
+}
+
+// ShowSpinnerOperation runs a spinner for the duration of an operation
+// This is a convenience method for simple operations
+func (s *slate) ShowSpinnerOperation(message string, operation func() error) error {
+	s.StartSpinner(message)
+
+	// Simple animation loop in a goroutine
+	done := make(chan bool)
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				s.UpdateSpinner()
+			}
+		}
+	}()
+
+	// Run the operation
+	err := operation()
+
+	// Stop the animation
+	done <- true
+
+	// Stop spinner with appropriate message
+	if err != nil {
+		s.StopSpinnerWithError(err.Error())
+	} else {
+		s.StopSpinner()
+	}
+
+	return err
+}
+
+// StopSpinnerWithError stops the spinner and shows an error message
+func (s *slate) StopSpinnerWithError(errorMessage string) {
+	if s.activeSpinner == nil {
+		return
+	}
+
+	// Clear the spinner line
+	fmt.Printf("\r\033[K")
+
+	// Show error message
+	errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+	fmt.Printf("%s %s\n", errorStyle.Render("❌"), errorMessage)
+
+	// Reset spinner state
+	s.activeSpinner = nil
+	s.spinnerMessage = ""
 }
 
 /*
@@ -357,6 +534,28 @@ slate.WriteStyledText("Emphasized text", StyleOptions{
 slate.ShowSuccess("Operation completed successfully!")
 slate.ShowEnvironmentContext("production")
 slate.ShowSecretOperation("added", "DATABASE_URL", "production", false)
+
+// Progress indicators for remote operations
+slate.ShowProgress("Connecting to server...")
+slate.ShowProgressWithSpinner("Uploading secrets...", 0) // Call with incrementing index for animation
+// Spinner examples
+// Simple spinner usage
+slate.StartSpinner("Processing...")
+// ... do some work ...
+slate.UpdateSpinner("Almost done...")
+// ... finish work ...
+slate.StopSpinner("Process completed!")
+
+// Spinner with error
+slate.StartSpinner("Connecting to server...")
+slate.StopSpinnerWithError("Failed to connect to server")
+
+// Convenient spinner wrapper
+err := slate.ShowSpinnerOperation("Uploading secrets...", func() error {
+    // Your operation here
+    time.Sleep(2 * time.Second) // Simulate work
+    return nil // or return an error
+})
 
 Common colors:
 - "34"  - Green

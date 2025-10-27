@@ -54,7 +54,7 @@ func (s *secretService) AddSecret(key, env string, secret Secret) error {
 	return nil
 }
 
-func (s *secretService) SetSecret(key, env string, secret Secret) (string, error) {
+func (s *secretService) SetSecret(key, env string, secret Secret) (ChangeType, error) {
 	envDir := s.envDir(env)
 	secretPath := filepath.Join(envDir, SecretFileName)
 
@@ -63,12 +63,12 @@ func (s *secretService) SetSecret(key, env string, secret Secret) (string, error
 		return "", fmt.Errorf("failed to read secrets: %w", err)
 	}
 
-	var action string
+	var action ChangeType
 	_, exists := data[key]
 	if !exists {
-		action = string(ChangeTypeAdd)
+		action = ChangeTypeAdd
 	} else {
-		action = string(ChangeTypeModify)
+		action = ChangeTypeModify
 	}
 
 	data[key] = secret

@@ -83,6 +83,6 @@ func (s *Add) Handle(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 
-	s.slate.ShowSecretOperation("added successfully", key, env, noSecret)
+	s.slate.ShowSecretOperation(core.ChangeTypeAdd, key, env, noSecret)
 	return nil
 }

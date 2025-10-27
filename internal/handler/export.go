@@ -27,7 +27,7 @@ func NewExportHandler(envService envService, cryptService cryptService, projectS
 }
 
 func (h *Export) Handle(ctx context.Context, cmd *cli.Command) error {
-	format := cmd.String("format")
+	format := cmd.String("output")
 	env, err := h.envService.CurrentEnv()
 	if err != nil {
 		return fmt.Errorf("failed to get current environment: %w", err)

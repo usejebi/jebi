@@ -12,6 +12,7 @@ const (
 
 var (
 	ErrProjectNameAlreadyExists = fmt.Errorf("project name already exists on remote")
+	ErrUnauthorized             = fmt.Errorf("unauthorized access to remote server")
 )
 
 func (c *client) Push(req PushRequest) (PushResponse, error) {
@@ -31,6 +32,9 @@ func (c *client) Push(req PushRequest) (PushResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return PushResponse{}, ErrUnauthorized
+		}
 		var errorResponse ErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return PushResponse{}, fmt.Errorf("failed to decode error response: %w", err)

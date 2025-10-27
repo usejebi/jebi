@@ -31,14 +31,6 @@ func NewPushHandler(projectService projectService, envService envService, secret
 }
 
 func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
-
-	// Load project configuration
-	project, err := h.projectService.LoadProjectConfig()
-	if err != nil {
-		h.slate.ShowError(fmt.Sprintf("Failed to load project: %v", err))
-		return nil
-	}
-
 	// Get current environment
 	currentEnv, err := h.envService.CurrentEnv()
 	if err != nil {
@@ -58,11 +50,22 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		fmt.Println("No new commits to push. Everything up-to-date.")
 		return nil
 	}
+
+	h.slate.StartSpinner("Preparing to push commits...")
+
+	// Load project configuration
+	project, err := h.projectService.LoadProjectConfig()
+	if err != nil {
+		h.slate.ShowError(fmt.Sprintf("Failed to load project: %v", err))
+		return nil
+	}
 	// add metadata to commits
 	for i := range commitsToPush {
 		commitsToPush[i].ProjectID = project.ID
 		commitsToPush[i].Environment = currentEnv
 	}
+
+	h.slate.UpdateSpinner("Loading project configuration...")
 
 	// Get current HEAD to compute final state
 	head, err := h.commitService.GetHead(currentEnv)
@@ -71,6 +74,7 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
+	h.slate.UpdateSpinner("Computing final state...")
 	// Get final state map from commits
 	stateMap, err := h.commitService.ComputeState(currentEnv, head.LocalHead)
 	if err != nil {
@@ -78,6 +82,7 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
+	h.slate.UpdateSpinner("Enriching final state with metadata...")
 	// Enrich with metadata by retrieving all secrets from disk
 	allSecrets, err := h.secretService.ListSecrets(project.ID, currentEnv)
 	if err != nil {
@@ -113,15 +118,22 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		FinalState:     finalState,
 		RemoteHeadHash: head.RemoteHead,
 	}
-	h.slate.ShowHeader(fmt.Sprintf("Pushing %d commits with %d secrets...\n", len(commitsToPush), len(finalState)))
 
+	h.slate.UpdateSpinner("Making push request to remote...")
 	// Make the push request using injected API client
 	response, err := h.apiClient.Push(pushReq)
 	if err != nil {
 		if errors.Is(err, remote.ErrProjectNameAlreadyExists) {
-			h.slate.ShowError(fmt.Sprintf("Project with name '%s' already exists on remote. Please rename your local project and try again.", project.Name))
+			h.slate.StopSpinner()
+			h.slate.ShowError(fmt.Sprintf("Project with name '%s' already exists on remote.", project.Name))
 			return nil
 		}
+		if errors.Is(err, remote.ErrUnauthorized) {
+			h.slate.StopSpinner()
+			h.slate.ShowError("Unauthorized access to remote server. Please try logging in.")
+			return nil
+		}
+		h.slate.StopSpinner()
 		h.slate.ShowError(fmt.Sprintf("Failed to push project: %v", err))
 		return nil
 	}
@@ -135,12 +147,8 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
-	// Show success message based on response
-	if response.IsFirstPush {
-		fmt.Printf("✅ Created and pushed project '%s' with %d commits\n", response.Name, response.CommitsPushed)
-	} else {
-		fmt.Printf("✅ Pushed %d new commits to project '%s'\n", response.CommitsPushed, response.Name)
-	}
+	h.slate.StopSpinner()
+	h.slate.WriteColoredText(response.Message, "")
 
 	return nil
 }

@@ -75,15 +75,15 @@ func (s *Set) Handle(ctx context.Context, cmd *cli.Command) error {
 			Nonce: nonce,
 		}
 	}
-	var action string
+	var action core.ChangeType
 	if action, err = s.secretService.SetSecret(key, env, secret); err != nil {
 		return fmt.Errorf("failed to set secret: %w", err)
 	}
 
-	if err := s.changeRecordService.AddChangeRecord(env, action, key, secret.Value, secret.Nonce, secret.NoSecret); err != nil {
+	if err := s.changeRecordService.AddChangeRecord(env, string(action), key, secret.Value, secret.Nonce, secret.NoSecret); err != nil {
 		return fmt.Errorf("failed to record change: %w", err)
 	}
 
-	s.slate.ShowSecretOperation(action+" successfully", key, env, noSecret)
+	s.slate.ShowSecretOperation(action, key, env, noSecret)
 	return nil
 }

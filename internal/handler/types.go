@@ -36,7 +36,7 @@ type envService interface {
 }
 
 type secretService interface {
-	SetSecret(key, env string, secret core.Secret) (string, error)
+	SetSecret(key, env string, secret core.Secret) (core.ChangeType, error)
 	AddSecret(key, env string, secret core.Secret) error
 	ListSecrets(projectId, env string) ([]core.Secret, error)
 	RemoveSecret(key, env string) error
@@ -54,6 +54,8 @@ type userService interface {
 	SaveCurrentUser(user core.User) error
 	LoadCurrentUser() (*core.User, error)
 	Logout() error
+	GetSystemUsername() string
+	GetCommitAuthor() string
 }
 
 type commitService interface {
@@ -89,5 +91,11 @@ type slate interface {
 	WriteIndentedText(text string, options ui.StyleOptions)
 	ShowSuccess(message string)
 	ShowEnvironmentContext(env string)
-	ShowSecretOperation(operation, key, env string, isPlaintext bool)
+	ShowSecretOperation(operation core.ChangeType, key, env string, isPlaintext bool)
+	RenderInitHeader()
+	StartSpinner(message string)
+	UpdateSpinner(newMessage ...string)
+	StopSpinner()
+	StopSpinnerWithError(errorMessage string)
+	ShowSpinnerOperation(message string, operation func() error) error
 }
