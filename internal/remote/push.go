@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	PushEndpoint = "/functions/v1/push"
+	PushEndpoint = "/functions/v1/sync"
 )
 
 var (
@@ -31,26 +31,20 @@ func (c *client) Push(req PushRequest) (PushResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return PushResponse{}, ErrUnauthorized
-		}
-		var errorResponse ErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
-			return PushResponse{}, fmt.Errorf("failed to decode error response: %w", err)
-		}
-
-		if resp.StatusCode == http.StatusConflict && errorResponse.Code == "PROJECT_NAME_ALREADY_EXISTS" {
-			return PushResponse{}, ErrProjectNameAlreadyExists
-		}
-
-		return PushResponse{}, fmt.Errorf("push failed: %s", errorResponse.Message)
-	}
-
 	// Parse response
 	var pushResponse PushResponse
 	if err := json.NewDecoder(resp.Body).Decode(&pushResponse); err != nil {
 		return PushResponse{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return PushResponse{}, ErrUnauthorized
+		}
+		if resp.StatusCode == http.StatusConflict && pushResponse.Code == "PROJECT_NAME_ALREADY_EXISTS" {
+			return PushResponse{}, ErrProjectNameAlreadyExists
+		}
+		return PushResponse{}, fmt.Errorf("push failed: %s", pushResponse.Message)
 	}
 
 	return pushResponse, nil

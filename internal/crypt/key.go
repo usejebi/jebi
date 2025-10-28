@@ -35,15 +35,9 @@ func (s *cryptService) SaveKey(encodedKey, project string) error {
 }
 
 func (s *cryptService) LoadKey(project string) ([]byte, error) {
-	// Try to load from keystore first
-	var encodedKey string
-	err := s.keystore.Get(fmt.Sprintf("%s:%s", project, core.KeyEncryptionKey), &encodedKey)
+	encodedKey, err := s.LoadKeyWithoutDecoding(project)
 	if err != nil {
-		// Fallback to file storage if keystore fails
-		encodedKey, err = s.readFromFile()
-		if err != nil {
-			return nil, fmt.Errorf("failed to load key from both keystore and file: %w", err)
-		}
+		return nil, err
 	}
 
 	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
@@ -51,6 +45,19 @@ func (s *cryptService) LoadKey(project string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to decode key: %w", err)
 	}
 	return decodedKey, nil
+}
+
+func (s *cryptService) LoadKeyWithoutDecoding(project string) (string, error) {
+	var encodedKey string
+	err := s.keystore.Get(fmt.Sprintf("%s:%s", project, core.KeyEncryptionKey), &encodedKey)
+	if err != nil {
+		// Fallback to file storage if keystore fails
+		encodedKey, err = s.readFromFile()
+		if err != nil {
+			return "", fmt.Errorf("failed to load key from both keystore and file: %w", err)
+		}
+	}
+	return encodedKey, nil
 }
 
 func (s *cryptService) readFromFile() (string, error) {

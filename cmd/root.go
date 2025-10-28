@@ -38,7 +38,7 @@ func initializeCommands() []*cli.Command {
 	logHandler := handler.NewLogHandler(envService, commitService, slate)
 	loginHandler := handler.NewLoginHandler(userService, slate)
 	apiClient := remote.NewAPIClient(core.DefaultServerURL)
-	pushHandler := handler.NewPushHandler(projectService, envService, secretService, commitService, apiClient, slate)
+	pushHandler := handler.NewPushHandler(projectService, envService, secretService, commitService, cryptService, apiClient, slate)
 
 	return []*cli.Command{
 		newInitCommand(projectHandler),

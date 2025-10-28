@@ -6,26 +6,28 @@ type Project struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+
+	Key string `json:"key,omitempty"` // Base64-encoded encryption key for the project
 }
 
 type Environment struct {
 	Name      string    `json:"name"`
-	ProjectID string    `json:"project_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ProjectID string    `json:"projectId"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type Secret struct {
 	Key             string    `json:"key"`
 	Value           string    `json:"value"`
 	Nonce           string    `json:"nonce"`
-	ProjectId       string    `json:"project_id"`
-	EnvironmentName string    `json:"environment_name"`
+	ProjectId       string    `json:"projectId"`
+	EnvironmentName string    `json:"environmentName"`
 	NoSecret        bool      `json:"nosecret"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	CreatedAt       time.Time `json:"createdAt"`
 }
 
 // Commit represents a single commit with its changes
@@ -35,16 +37,16 @@ type Commit struct {
 	Author    string    `json:"author"`
 	Timestamp time.Time `json:"timestamp"`
 	Changes   []Change  `json:"changes"`
-	ParentID  string    `json:"parent_id,omitempty"` // Empty for first commit
+	ParentID  string    `json:"parentId,omitempty"` // Empty for first commit
 
-	ProjectID   string `json:"project_id,omitempty"`
-	Environment string `json:"environment,omitempty"`
+	ProjectID       string `json:"projectId,omitempty"`
+	EnvironmentName string `json:"environmentName,omitempty"`
 }
 
 // Head represents the HEAD pointers for an environment
 type Head struct {
-	LocalHead  string `json:"local_head"`  // Latest local commit ID
-	RemoteHead string `json:"remote_head"` // Latest remote commit ID
+	LocalHead  string `json:"localHead"`  // Latest local commit ID
+	RemoteHead string `json:"remoteHead"` // Latest remote commit ID
 }
 
 type CurrentEnv struct {

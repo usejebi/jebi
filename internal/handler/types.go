@@ -24,6 +24,7 @@ type cryptService interface {
 	LoadSecrets(project, env string) (map[string]string, error)
 	SaveKey(key, project string) error
 	LoadKey(project string) ([]byte, error)
+	LoadKeyWithoutDecoding(project string) (string, error)
 }
 
 type envService interface {

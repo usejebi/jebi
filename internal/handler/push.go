@@ -15,16 +15,18 @@ type Push struct {
 	envService     envService
 	secretService  secretService
 	commitService  commitService
+	cryptService   cryptService
 	apiClient      apiClient
 	slate          slate
 }
 
-func NewPushHandler(projectService projectService, envService envService, secretService secretService, commitService commitService, apiClient apiClient, slate slate) *Push {
+func NewPushHandler(projectService projectService, envService envService, secretService secretService, commitService commitService, cryptService cryptService, apiClient apiClient, slate slate) *Push {
 	return &Push{
 		projectService: projectService,
 		envService:     envService,
 		secretService:  secretService,
 		commitService:  commitService,
+		cryptService:   cryptService,
 		apiClient:      apiClient,
 		slate:          slate,
 	}
@@ -59,10 +61,17 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		h.slate.ShowError(fmt.Sprintf("Failed to load project: %v", err))
 		return nil
 	}
+
+	encodedKey, err := h.cryptService.LoadKeyWithoutDecoding(project.ID)
+	if err != nil {
+		h.slate.ShowError(fmt.Sprintf("Failed to retrieve encryption key: %v", err))
+		return nil
+	}
+	project.Key = encodedKey
 	// add metadata to commits
 	for i := range commitsToPush {
 		commitsToPush[i].ProjectID = project.ID
-		commitsToPush[i].Environment = currentEnv
+		commitsToPush[i].EnvironmentName = currentEnv
 	}
 
 	h.slate.UpdateSpinner("Loading project configuration...")
@@ -138,10 +147,8 @@ func (h *Push) Handle(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	// Update remote HEAD after successful push if we have commits
-	if len(commitsToPush) > 0 {
-		latestCommit := commitsToPush[len(commitsToPush)-1]
-		err = h.commitService.UpdateRemoteHead(currentEnv, latestCommit.ID)
+	if response.Data.CommitHead != "" {
+		err = h.commitService.UpdateRemoteHead(currentEnv, response.Data.CommitHead)
 		if err != nil {
 			h.slate.ShowWarning(fmt.Sprintf("Push succeeded but failed to update remote HEAD locally: %v", err))
 		}

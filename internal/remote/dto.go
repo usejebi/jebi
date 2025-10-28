@@ -13,10 +13,11 @@ type PushRequest struct {
 }
 
 type PushResponse struct {
-	Message 	 string `json:"message"`
+	Message string           `json:"message"`
+	Code    string           `json:"code"`
+	Data    PushResponseData `json:"data,omitempty"`
 }
 
-type ErrorResponse struct {
-	Message string `json:"message"`
-	Code    string `json:"code"`
+type PushResponseData struct {
+	CommitHead string `json:"commitHead"`
 }
