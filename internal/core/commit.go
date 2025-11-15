@@ -38,7 +38,7 @@ func (s *commitService) generateCommitID(message string, author string, timestam
 }
 
 // AddCommit creates a new commit with the given changes
-func (s *commitService) AddCommit(env, message, author string, changes []Change) (*Commit, error) {
+func (s *commitService) AddCommit(id, env, message, author string, changes []Change, timestamp time.Time) (*Commit, error) {
 	// Load existing commits
 	commits, err := s.loadCommits(env)
 	if err != nil {
@@ -51,10 +51,13 @@ func (s *commitService) AddCommit(env, message, author string, changes []Change)
 		return nil, fmt.Errorf("failed to get HEAD: %w", err)
 	}
 
+	if id == "" {
+		id = s.generateCommitID(message, author, timestamp)
+	}
+
 	// Create new commit
-	timestamp := time.Now()
 	commit := &Commit{
-		ID:        s.generateCommitID(message, author, timestamp),
+		ID:        id,
 		Message:   message,
 		Author:    author,
 		Timestamp: timestamp,
@@ -230,7 +233,8 @@ func (s *commitService) GetCommitsSinceRemoteHead(env string) ([]Commit, error) 
 
 // loadCommits loads commits from disk
 func (s *commitService) loadCommits(env string) ([]Commit, error) {
-	commits, err := io.ReadJSONFile[[]Commit](s.getCommitsPath(env))
+	path := s.getCommitsPath(env)
+	commits, err := io.ReadJSONFile[[]Commit](path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read commits file: %w", err)
 	}

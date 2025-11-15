@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jawahars16/jebi/internal/io"
 )
 
@@ -19,13 +18,14 @@ func NewProjectService(workingDir string) *projectService {
 	}
 }
 
-func (p *projectService) SaveProjectConfig(name, description string) (string, error) {
+func (p *projectService) SaveProjectConfig(id, name, description, defaultEnvironment string) (string, error) {
 	project := Project{
-		ID:          uuid.New().String(),
-		Name:        name,
-		Description: description,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		ID:                 id,
+		Name:               name,
+		Description:        description,
+		DefaultEnvironment: defaultEnvironment,
+		CreatedAt:          time.Now().UTC(),
+		UpdatedAt:          time.Now().UTC(),
 	}
 	path := filepath.Join(p.workingDir, fmt.Sprintf(".%s", AppName), ProjectConfigFile)
 	err := io.WriteJSONToFile(path, project)

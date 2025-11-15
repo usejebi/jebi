@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	PushEndpoint = "/functions/v1/sync"
+	PushEndpoint = "/functions/v1/push"
 )
 
 var (

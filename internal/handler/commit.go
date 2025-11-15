@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jawahars16/jebi/internal/ui"
 	"github.com/urfave/cli/v3"
@@ -79,7 +80,7 @@ func (h *Commit) Handle(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Create commit using commitstore
-	commit, err := h.commitService.AddCommit(env, msg, author, currentEnv.Changes)
+	commit, err := h.commitService.AddCommit("", env, msg, author, currentEnv.Changes, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to create commit: %w", err)
 	}

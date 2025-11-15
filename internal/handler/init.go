@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jawahars16/jebi/internal/core"
 	"github.com/urfave/cli/v3"
 )
@@ -75,7 +76,7 @@ func (h *Init) Handle(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Save project configuration
-	projectId, err := h.projectService.SaveProjectConfig(projectName, projectDescription)
+	projectId, err := h.projectService.SaveProjectConfig(uuid.New().String(), projectName, projectDescription, environment)
 	if err != nil {
 		return err
 	}

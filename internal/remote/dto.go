@@ -21,3 +21,20 @@ type PushResponse struct {
 type PushResponseData struct {
 	CommitHead string `json:"commitHead"`
 }
+
+type CloneRequest struct {
+	ProjectSlug string `json:"projectSlug"`
+}
+
+type CloneResponse struct {
+	Message string            `json:"message"`
+	Code    string            `json:"code"`
+	Data    CloneResponseData `json:"data,omitempty"`
+}
+
+type CloneResponseData struct {
+	Project     core.Project     `json:"project"`
+	Environment core.Environment `json:"environment"`
+	Commits     []core.Commit    `json:"commits"`
+	Secrets     []core.Secret    `json:"secrets"`
+}

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jawahars16/jebi/internal/core"
 	"github.com/jawahars16/jebi/internal/remote"
@@ -13,7 +15,7 @@ type appService interface {
 }
 
 type projectService interface {
-	SaveProjectConfig(name, description string) (string, error)
+	SaveProjectConfig(id, name, description, defaultEnvironment string) (string, error)
 	LoadProjectConfig() (*core.Project, error)
 }
 
@@ -61,7 +63,7 @@ type userService interface {
 
 type commitService interface {
 	// Commit operations
-	AddCommit(env, message, author string, changes []core.Change) (*core.Commit, error)
+	AddCommit(id, env, message, author string, changes []core.Change, timestamp time.Time) (*core.Commit, error)
 	GetCommit(env, commitID string) (*core.Commit, error)
 	ListCommits(env string) ([]core.Commit, error)
 
@@ -77,6 +79,7 @@ type commitService interface {
 
 type apiClient interface {
 	Push(req remote.PushRequest) (remote.PushResponse, error)
+	Clone(req remote.CloneRequest) (remote.CloneResponse, error)
 }
 
 type slate interface {
